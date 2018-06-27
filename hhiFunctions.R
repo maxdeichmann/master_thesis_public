@@ -4,6 +4,8 @@ library(diverse)
 
 hhi <- function(df,variable,HHIName) {
   
+  environment(hhi)
+  
   #check variables
   if (missing(df))
     stop("Need to specify df.")
@@ -61,14 +63,16 @@ hhi <- function(df,variable,HHIName) {
     }
 
     #calculate HHI for the entire matrix
-    hhi <- diversity(hhiMatrix, type='hh', category_row=TRUE)
-    
+    hhiReturn <- diversity(hhiMatrix, type='hh', category_row=TRUE)
+    hhiReturn <- hhiReturn[order(as.numeric(rownames(hhiReturn))),,drop=FALSE]
+    assign('hhiReturn', hhiReturn, pos=.GlobalEnv)
+
     #manage output 
-    names(hhi) <- c(HHIName)
+    names(hhiReturn) <- c(HHIName)
     if (a == 1) {
-      output <- cbind(out,hhi)
+      output <- cbind(out,hhiReturn)
     } else {
-      output <- rbind(output,cbind(out,hhi))
+      output <- rbind(output,cbind(out,hhiReturn))
     }
   }
   return(output)

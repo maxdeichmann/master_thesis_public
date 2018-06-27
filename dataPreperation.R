@@ -1,12 +1,15 @@
+## The option below is used upon initializing the rJava environment
+## and may be placed in an .Renviron or .Rprofile file
+options(java.parameters = c("-Djava.awt.headless=true", "-Xmx1g") );
+
 #clear console
 cat("\014") 
 
 #clear workspace
 rm(list = ls())
 
-## The option below is used upon initializing the rJava environment
-## and may be placed in an .Renviron or .Rprofile file
-options(java.parameters = c("-Djava.awt.headless=true", "-Xmx1g") );
+#clear graphs
+graphics.off()
 
 #Import required libraries
 library(readxl)
@@ -24,9 +27,8 @@ df <- read_excel("Original_Adapted.xlsx")
 #add HHL
 df <- hhi(df,"Company country", "GeoHHI")
 
+write.xlsx(df, file="Original_hhi.xlsx", sheetName="hhi")
 
-write.xlsx(df, file="hhi.xlsx", sheetName="hhi")
-
-#####check deal 33
-
-
+hist(df$GeoHHI)
+hist(df$`Deal size`)
+hist(df$`Gross IRR`)
