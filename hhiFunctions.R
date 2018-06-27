@@ -4,7 +4,7 @@ library(diverse)
 
 hhi <- function(df,variable,HHIName) {
   
-  #test variables
+  #check variables
   if (missing(df))
     stop("Need to specify df.")
   if (missing(variable))
