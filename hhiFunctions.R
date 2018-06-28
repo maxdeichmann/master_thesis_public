@@ -31,7 +31,7 @@ hhi <- function(df,variable,HHIName) {
     subdf <- subset(df, Investor_fund_ID == a)
     
     #sort by date
-    out <- subdf[order(as.Date(subdf$`Deal date`)),]
+    out <- subdf[order(as.Date(subdf$Deal_Date)),]
     
     #get all data of selected variable
     data <- out[[variable]]
@@ -77,3 +77,21 @@ hhi <- function(df,variable,HHIName) {
   }
   return(output)
 }
+
+hhiTimeSeries <- function(df, variables) {
+  
+  colClasses = c("Date", "double", "double")
+  col.names = c("Date", "Deal_ID", "Investor_fund_ID")
+  
+  for (i in 1:length(variables)) {
+    col.names[i+3] <- variables[i]
+    colClasses[i+3] <- "double"
+  }
+  
+  timeSeriesdf <- read.table(text = "",
+                             colClasses = colClasses,
+                             col.names = col.names)
+  
+
+}
+

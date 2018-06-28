@@ -11,4 +11,35 @@ rm(list = ls())
 #clear graphs
 graphics.off()
 
+#Import required libraries
+library(plyr)
+
 load("dataPreperation.Rda")
+
+# initial data analysis
+# qplot(data = df, x = df$Deal_Size)
+# qplot(data = df, x = df$Gross_IRR)
+# qplot(data=df, x = df$Investor_fund_ID)
+# qplot(data=df, x = df$Primary_Industry_Group)
+# qplot(data=df, x = df$Primary_Industry_Sector)
+# qplot(data=df, x = df$Primary_Industry_Code)
+# qplot(data=df, x = df$Company_Stage)
+
+# plot HHIs
+# qplot(data=df, x = df$GeoHHI)
+# qplot(data=df, x = df$StageHHI)
+# qplot(data=df, x = df$PIGHHI)
+# qplot(data=df, x = df$PICHHI)
+# qplot(data=df, x = df$PISHHI)
+
+uniqueGroup <- unique(df$Primary_Industry_Group)
+uniqueCode <- unique(df$Primary_Industry_Code)
+uniqueSector <- unique(df$Primary_Industry_Sector)
+
+for(item in uniqueGroup) {
+  # message("%s ; %i", item, count(uniqueGroup,item))
+  print(item)
+  print(uniqueGroup)
+  count(uniqueGroup,"Semiconductors")
+  # message(count(uniqueGroup,item))
+}
