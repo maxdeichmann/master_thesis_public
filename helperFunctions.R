@@ -64,6 +64,12 @@ hhi <- function(df,variable,HHIName) {
 
     #calculate HHI for the entire matrix
     hhiReturn <- diversity(hhiMatrix, type='hh', category_row=TRUE)
+    
+    # 1 - HHI to have diversification = 1 and specialisation = 0
+    for (i in 1:nrow(hhiReturn)) {
+      hhiReturn$HHI[i] <- 1 - hhiReturn$HHI[i]
+    }
+    
     hhiReturn <- hhiReturn[order(as.numeric(rownames(hhiReturn))),,drop=FALSE]
     assign('hhiReturn', hhiReturn, pos=.GlobalEnv)
 
@@ -78,6 +84,49 @@ hhi <- function(df,variable,HHIName) {
   return(output)
 }
 
+fundData <- function(dealdf) {
+  
+  
+  #get number of funds
+  col.names = c("Fund_ID", "Fund_IRR", "Investments", "Total_Investments", "GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
+  colClasses = c("integer", "integer", "double",  "double",  "double",  "double",  "double",  "double",  "double")
+  
+  funddf <- read.table(text = "", colClasses = colClasses, col.names = col.names)
+  
+  maxFundNr = max(dealdf$Investor_fund_ID)
+  funds <- 1:maxFundNr
+  
+  #loop through funds
+  for(a in seq(from=1, to=maxFundNr, by=1)) {
+    
+    #get df with fund only
+    subdf <- subset(dealdf, Investor_fund_ID == a)
+    
+    #sort by date
+    out <- subdf[order(as.Date(subdf$Deal_Date)),]
+    
+    # weighted average of irr to get fund irr
+    wa <- weighted.mean(out$Gross_IRR, out$Deal_Size)
+    
+    # create row
+    funddf[nrow(funddf) + 1,] = list(out$Investor_fund_ID[nrow(out)],
+                                     wa,
+                                     nrow(out),
+                                     sum(out$Deal_Size),
+                                     out$GeoHHI[nrow(out)],
+                                     out$StageHHI[nrow(out)],
+                                     out$PIGHHI[nrow(out)],
+                                     out$PICHHI[nrow(out)],
+                                     out$PISHHI[nrow(out)])
+  }
+  return(funddf)
+}
+
+
+
+
+
+
 hhiTimeSeries <- function(df, variables) {
   
   colClasses = c("Date", "double", "double")
@@ -91,7 +140,8 @@ hhiTimeSeries <- function(df, variables) {
   timeSeriesdf <- read.table(text = "",
                              colClasses = colClasses,
                              col.names = col.names)
-  
 
 }
+
+
 
