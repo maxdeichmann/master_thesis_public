@@ -1,7 +1,7 @@
 #import libraries
 library(diverse)
 
-
+# calculate and append hhi for deals
 hhi <- function(df,variable,HHIName) {
   
   environment(hhi)
@@ -84,12 +84,12 @@ hhi <- function(df,variable,HHIName) {
   return(output)
 }
 
+# crate dataframe on fund level
 fundData <- function(dealdf) {
   
-  
   #get number of funds
-  col.names = c("Fund_ID", "Fund_IRR", "Investments", "Total_Investments", "GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
-  colClasses = c("integer", "integer", "double",  "double",  "double",  "double",  "double",  "double",  "double")
+  col.names = c("Fund_ID", "Fund_IRR", "Fund_SD", "Investments", "Total_Investments", "GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
+  colClasses = c("integer", "integer", "double", "double",  "double",  "double",  "double",  "double",  "double",  "double")
   
   funddf <- read.table(text = "", colClasses = colClasses, col.names = col.names)
   
@@ -107,10 +107,12 @@ fundData <- function(dealdf) {
     
     # weighted average of irr to get fund irr
     wa <- weighted.mean(out$Gross_IRR, out$Deal_Size)
+    sd <- sd(out$Gross_IRR)
     
     # create row
     funddf[nrow(funddf) + 1,] = list(out$Investor_fund_ID[nrow(out)],
                                      wa,
+                                     sd,
                                      nrow(out),
                                      sum(out$Deal_Size),
                                      out$GeoHHI[nrow(out)],

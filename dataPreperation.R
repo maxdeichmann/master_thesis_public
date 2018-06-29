@@ -43,15 +43,14 @@ dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE
 # replace Deal size NA with median
 dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE)
 
-# time series
-# timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
-
 # create fund level data
 funddf <- fundData(dealdf)
 
+# time series
+# timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
+
 #save data
 excel_export(list(dealdf,funddf), "dataPreperation.xlsx", table_names=c("deal", "fund"))
-# write.xlsx(df, file="dataPreperation.xlsx", sheetName="deal", row.names=FALSE)
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
 save(dealdf,file="dataPreperation_deal.Rda")
 save(funddf,file="dataPreperation_fund.Rda")
