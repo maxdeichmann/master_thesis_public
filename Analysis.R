@@ -13,6 +13,7 @@ graphics.off()
 
 #Import required libraries
 library(plyr)
+library(ggplot2)
 
 load("dataPreperation_deal.Rda")
 load("dataPreperation_fund.Rda")
@@ -48,7 +49,7 @@ scatter.smooth(x=funddf$PICHHI, y=funddf$Fund_SD, main="FIRR - PICHHI")
 scatter.smooth(x=funddf$PISHHI, y=funddf$Fund_SD, main="FIRR - PISHHI")
 
 
-
+qplot(data = funddf, x = funddf$PISHHI, main="test")
 
 
 

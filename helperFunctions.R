@@ -88,8 +88,8 @@ hhi <- function(df,variable,HHIName) {
 fundData <- function(dealdf) {
   
   #get number of funds
-  col.names = c("Fund_ID", "Fund_IRR", "Fund_SD", "Investments", "Total_Investments", "GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
-  colClasses = c("integer", "integer", "double", "double",  "double",  "double",  "double",  "double",  "double",  "double")
+  col.names = c("Fund_ID", "Fund_IRR", "Fund_SD", "Investments", "Total_Investments", "GeoHHI", "StageHHI", "PIGHHI", "PICHHI", "PISHHI")
+  colClasses = c("integer", "integer", "double", "double", "double", "double", "double", "double", "double", "double")
   
   funddf <- read.table(text = "", colClasses = colClasses, col.names = col.names)
   
@@ -105,9 +105,9 @@ fundData <- function(dealdf) {
     #sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)),]
     
-    # weighted average of irr to get fund irr
-    wa <- weighted.mean(out$Gross_IRR, out$Deal_Size)
-    sd <- sd(out$Gross_IRR)
+    # weighted average of irr to get fund irr removing na
+    wa <- weighted.mean(out$Gross_IRR, out$Deal_Size, na.rm = TRUE)
+    sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
     # create row
     funddf[nrow(funddf) + 1,] = list(out$Investor_fund_ID[nrow(out)],
@@ -142,8 +142,4 @@ hhiTimeSeries <- function(df, variables) {
   timeSeriesdf <- read.table(text = "",
                              colClasses = colClasses,
                              col.names = col.names)
-
 }
-
-
-
