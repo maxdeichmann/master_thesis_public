@@ -33,10 +33,18 @@ dealdf <- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
 dealdf <- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
 dealdf <- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 
+# dummy creation
+
+
+
+
+
+#dealdf <- dummy(df)
+
+
+
 
 # handle missing data
-
-# IRR
 # replace IRR NA with median
 dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE)
 

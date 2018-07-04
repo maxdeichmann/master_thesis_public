@@ -18,6 +18,14 @@ library(ggplot2)
 load("dataPreperation_deal.Rda")
 load("dataPreperation_fund.Rda")
 
+# descriptives
+summary(dealdf)
+summary(funddf)
+
+
+
+
+
 # initial data analysis
 qplot(data = dealdf, x = dealdf$Deal_Size)
 # qplot(data = df, x = df$Gross_IRR)
@@ -42,18 +50,14 @@ qplot(data = funddf, x = funddf$Fund_IRR)
 
 
 # linear analysis
-scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_SD, main="FIRR - PIGHHI")
-scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_SD, main="FIRR - STageHHI")
-scatter.smooth(x=funddf$PIGHHI, y=funddf$Fund_SD, main="FIRR - PIGHHI")
-scatter.smooth(x=funddf$PICHHI, y=funddf$Fund_SD, main="FIRR - PICHHI")
-scatter.smooth(x=funddf$PISHHI, y=funddf$Fund_SD, main="FIRR - PISHHI")
+# scatter.smooth(x=dealdf$StageHHI, y=dealdf$Deal_Date, main="FIRR - PIGHHI")
+# scatter.smooth(x=dealdf$StageHHI, y=dealdf$Deal_Date, main="FIRR - STageHHI")
+# scatter.smooth(x=dealdf$PIGHHI, y=dealdf$Deal_Date, main="FIRR - PIGHHI")
+# scatter.smooth(x=dealdf$PICHHI, y=dealdf$Deal_Date, main="FIRR - PICHHI")
+# scatter.smooth(x=dealdf$PISHHI, y=dealdf$Deal_Date, main="FIRR - PISHHI")
 
 
-qplot(data = funddf, x = funddf$PISHHI, main="test")
-
-
-
-
+# qplot(data = dealdf, x = dealdf$PISHHI, main="test")
 
 
 
