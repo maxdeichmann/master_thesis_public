@@ -22,7 +22,7 @@ setwd("/Users/maximiliandeichmann/Development/MasterThesis")
 source("helperFunctions.R")
 
 # Set working directory to access source file
-setwd("/Users/maximiliandeichmann/Documents/Education/TUM/Semester_4/MA/04_Statistics/Datensatz")
+setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
 
 dealdf <- read_excel("Original_Adapted.xlsx", col_types = c("numeric", "numeric", "numeric", "text", "text", "text", "text", "text", "date", "numeric", "text"))
 
@@ -33,13 +33,14 @@ dealdf <- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
 dealdf <- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
 dealdf <- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 
-# dummy creation
+# year dummy creation
+dealdf <- cbind(dealdf, as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4))))
 
+dummyVector <- c()
+for (i in 1980:2012) {
+  dummyVector <- c(dummyVector, as.character(i))
+}
 
-
-
-
-#dealdf <- dummy(df)
 
 
 
