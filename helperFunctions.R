@@ -19,15 +19,15 @@ hhi <- function(df, variable, HHIName) {
   if (!is.character(HHIName))
     stop("HHIName must be a string")
   
-  #get number of funds
-  maxFundNr = max(df$Investor_fund_ID)
-  funds <- 1:maxFundNr
+  # get number of funds
+  funds <- unique(df$Investor_fund_ID)
+  nrOfFunds = length(funds)
   
   #loop through funds
-  for (a in seq(from = 1, to = maxFundNr, by = 1)) {
+  for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
     
     # create fund subset
-    subdf <- subset(df, Investor_fund_ID == a)
+    subdf <- subset(df, Investor_fund_ID == funds[a])
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)), ]
@@ -121,14 +121,15 @@ fundData <- function(dealdf) {
                colClasses = colClasses,
                col.names = col.names)
   
-  maxFundNr = max(dealdf$Investor_fund_ID)
-  funds <- 1:maxFundNr
+  # get number of funds
+  funds <- unique(dealdf$Investor_fund_ID)
+  nrOfFunds = length(funds)
   
-  # loop through funds
-  for (a in seq(from = 1, to = maxFundNr, by = 1)) {
+  #loop through funds
+  for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
     
     # create fund subset
-    subdf <- subset(dealdf, Investor_fund_ID == a)
+    subdf <- subset(dealdf, Investor_fund_ID == funds[a])
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)), ]
@@ -183,14 +184,25 @@ hhiBuckets <- function(numBuckets, funddf) {
         }
       }
       if(length(irr) > 0) {
-        outcomes = c(outcomes, weighted.mean(irr,investment,na.rm = TRUE)) 
+        outcomes = c(outcomes, weighted.mean(irr,investment,na.rm = TRUE))
       } else {
         outcomes = c(outcomes, 0) 
       }
     }
     groupdf[[x]] <- outcomes
   }
-  
+  groupdf[["bucket"]] <- c(0:numBuckets)
   return(groupdf)
   
 }
+
+
+# from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
+# remove_outliers <- function(x, na.rm = TRUE, ...) {
+#   qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+#   H <- 1.5 * IQR(x, na.rm = na.rm)
+#   y <- x
+#   y[x < (qnt[1] - H)] <- NA
+#   y[x > (qnt[2] + H)] <- NA
+#   y
+# }

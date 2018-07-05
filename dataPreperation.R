@@ -26,25 +26,6 @@ setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_S
 
 dealdf <- read_excel("Original_Adapted.xlsx", col_types = c("numeric", "numeric", "numeric", "text", "text", "text", "text", "text", "date", "numeric", "text"))
 
-#add HHL
-dealdf <- hhi(dealdf,"Company_Country", "GeoHHI")
-dealdf <- hhi(dealdf,"Company_Stage", "StageHHI")
-dealdf <- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
-dealdf <- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
-dealdf <- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
-
-# year dummy creation
-dealdf <- cbind(dealdf, as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4))))
-
-# experience dummy
-
-
-# create dummy vector
-dummyVector <- c()
-for (i in 1980:2012) {
-  dummyVector <- c(dummyVector, as.character(i))
-}
-
 # handle missing data
 # replace IRR NA with median
 dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE)
@@ -52,8 +33,30 @@ dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE
 # replace Deal size NA with median
 dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE)
 
+
+# drop top and bottom 5% quantile from irr deals
+reduceddf <- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1, 0.9)),]
+
+#add HHL
+reduceddf <- hhi(reduceddf,"Company_Country", "GeoHHI")
+reduceddf <- hhi(reduceddf,"Company_Stage", "StageHHI")
+reduceddf <- hhi(reduceddf,"Primary_Industry_Group", "PIGHHI")
+reduceddf <- hhi(reduceddf,"Primary_Industry_Code", "PICHHI")
+reduceddf <- hhi(reduceddf,"Primary_Industry_Sector", "PISHHI")
+
+# year dummy creation
+reduceddf <- cbind(reduceddf, as.data.frame.matrix(table(sequence(nrow(reduceddf)), substring(reduceddf$Deal_Date,1,4))))
+
+# experience dummy
+
+# create dummy vector
+dummyVector <- c()
+for (i in 1980:2012) {
+  dummyVector <- c(dummyVector, as.character(i))
+}
+
 # create fund level data
-funddf <- fundData(dealdf)
+funddf <- fundData(reduceddf)
 
 # create grouped hhi
 groupdf <- hhiBuckets(10,funddf)
@@ -63,8 +66,8 @@ groupdf <- hhiBuckets(10,funddf)
 # timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
 
 #save data
-excel_export(list(dealdf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
+excel_export(list(reduceddf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
-save(dealdf,file="dataPreperation_deal.Rda")
+save(reduceddf,file="dataPreperation_deal.Rda")
 save(funddf,file="dataPreperation_fund.Rda")
 save(groupdf,file="dataPreperation_group.Rda")

@@ -17,11 +17,12 @@ library(ggplot2)
 
 load("dataPreperation_deal.Rda")
 load("dataPreperation_fund.Rda")
+load("dataPreperation_group.Rda")
 
 # descriptives
 summary(dealdf)
 summary(funddf)
-
+summary(groupdf)
 
 
 
@@ -46,11 +47,11 @@ qplot(data=dealdf, x = dealdf$Company_Stage)
 # uniqueCode <- unique(df$Primary_Industry_Code)
 # uniqueSector <- unique(df$Primary_Industry_Sector)
 
-qplot(data = funddf, x = funddf$Fund_IRR)
+# qplot(data = funddf, x = funddf$Fund_IRR)
 
 
 # linear analysis
-scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_IRR, main="geo")
+# scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_IRR, main="geo")
 # scatter.smooth(x=dealdf$StageHHI, y=dealdf$Deal_Date, main="FIRR - STageHHI")
 # scatter.smooth(x=dealdf$PIGHHI, y=dealdf$Deal_Date, main="FIRR - PIGHHI")
 # scatter.smooth(x=dealdf$PICHHI, y=dealdf$Deal_Date, main="FIRR - PICHHI")
@@ -60,9 +61,25 @@ scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_IRR, main="geo")
 # qplot(data = dealdf, x = dealdf$PISHHI, main="test")
 
 
+ggplot(data=groupdf, aes(x=bucket, y=GeoHHI, group=1)) +
+  geom_line()+
+  geom_point()
+
+ggplot(data=groupdf, aes(x=bucket, y=StageHHI, group=1)) +
+  geom_line()+
+  geom_point()
+
+ggplot(data=groupdf, aes(x=bucket, y=PIGHHI, group=1)) +
+  geom_line()+
+  geom_point()
+
+ggplot(data=groupdf, aes(x=bucket, y=PICHHI, group=1)) +
+  geom_line()+
+  geom_point()
+
+ggplot(data=groupdf, aes(x=bucket, y=PISHHI, group=1)) +
+  geom_line()+
+  geom_point()
 
 
-
-
-
-
+ggplot(funddf, aes(x=Fund_IRR)) + geom_histogram()
