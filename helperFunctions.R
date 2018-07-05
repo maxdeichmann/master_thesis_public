@@ -98,6 +98,7 @@ fundData <- function(dealdf) {
     "Fund_SD",
     "Investments",
     "Total_Investments",
+    "Total Return",
     "GeoHHI",
     "StageHHI",
     "PIGHHI",
@@ -107,6 +108,7 @@ fundData <- function(dealdf) {
   colClasses = c(
     "integer",
     "integer",
+    "double",
     "double",
     "double",
     "double",
