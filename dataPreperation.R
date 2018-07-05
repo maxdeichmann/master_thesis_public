@@ -36,14 +36,14 @@ dealdf <- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 # year dummy creation
 dealdf <- cbind(dealdf, as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4))))
 
+# experience dummy
+
+
+# create dummy vector
 dummyVector <- c()
 for (i in 1980:2012) {
   dummyVector <- c(dummyVector, as.character(i))
 }
-
-
-
-
 
 # handle missing data
 # replace IRR NA with median
