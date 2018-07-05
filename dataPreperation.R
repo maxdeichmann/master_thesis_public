@@ -55,11 +55,16 @@ dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE
 # create fund level data
 funddf <- fundData(dealdf)
 
+# create grouped hhi
+groupdf <- hhiBuckets(10,funddf)
+
+
 # time series
 # timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
 
 #save data
-excel_export(list(dealdf,funddf), "dataPreperation.xlsx", table_names=c("deal", "fund"))
+excel_export(list(dealdf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
 save(dealdf,file="dataPreperation_deal.Rda")
 save(funddf,file="dataPreperation_fund.Rda")
+save(groupdf,file="dataPreperation_group.Rda")

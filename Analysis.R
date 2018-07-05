@@ -50,7 +50,7 @@ qplot(data = funddf, x = funddf$Fund_IRR)
 
 
 # linear analysis
-# scatter.smooth(x=dealdf$StageHHI, y=dealdf$Deal_Date, main="FIRR - PIGHHI")
+scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_IRR, main="geo")
 # scatter.smooth(x=dealdf$StageHHI, y=dealdf$Deal_Date, main="FIRR - STageHHI")
 # scatter.smooth(x=dealdf$PIGHHI, y=dealdf$Deal_Date, main="FIRR - PIGHHI")
 # scatter.smooth(x=dealdf$PICHHI, y=dealdf$Deal_Date, main="FIRR - PICHHI")

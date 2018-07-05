@@ -155,25 +155,42 @@ fundData <- function(dealdf) {
 }
 
 
-dummy <- function(df) {
+hhiBuckets <- function(numBuckets, funddf) {
+  if (missing(numBuckets) | !is.numeric(numBuckets))
+    stop("Check function")
+  if (missing(funddf) | !is.data.frame(funddf))
+    stop("Check function")
   
-  if (!is.data.frame(df))
-    stop("df must be data frame")
+  groupdf <- data.frame(matrix(NA, nrow = numBuckets+1, ncol = 0))
   
-}
-
-
-
-hhiTimeSeries <- function(df, variables) {
-  colClasses = c("Date", "double", "double")
-  col.names = c("Date", "Deal_ID", "Investor_fund_ID")
+  hhis <- c("GeoHHI",
+            "StageHHI",
+            "PIGHHI",
+            "PICHHI",
+            "PISHHI")
   
-  for (i in 1:length(variables)) {
-    col.names[i + 3] <- variables[i]
-    colClasses[i + 3] <- "double"
+  
+  for (x in hhis) {
+    outcomes <- c()
+    for (a in seq(from = 0, to = 1, by = 1/numBuckets)) {
+        irr <- c()
+        investment <- c()
+      for (b in seq(from = 1, to = nrow(funddf), by = 1)) {
+        interest <- funddf[[x]][b]
+        if((interest < a+1/numBuckets) & (interest >= a)) {
+          irr <- c(irr, funddf[["Fund_IRR"]][b])
+          investment <- c(investment, funddf[["Total_Investments"]][b])
+        }
+      }
+      if(length(irr) > 0) {
+        outcomes = c(outcomes, weighted.mean(irr,investment,na.rm = TRUE)) 
+      } else {
+        outcomes = c(outcomes, 0) 
+      }
+    }
+    groupdf[[x]] <- outcomes
   }
   
-  timeSeriesdf <- read.table(text = "",
-                             colClasses = colClasses,
-                             col.names = col.names)
+  return(groupdf)
+  
 }
