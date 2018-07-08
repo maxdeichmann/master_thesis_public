@@ -135,7 +135,6 @@ fundData <- function(dealdf) {
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)), ]
-    
     # weighted average of irr to get fund irr removing na
     wa <- weighted.mean(out$Gross_IRR, out$Deal_Size, na.rm = TRUE)
     sd <- sd(out$Gross_IRR, na.rm = TRUE)
@@ -158,10 +157,10 @@ fundData <- function(dealdf) {
 }
 
 
-hhiBuckets <- function(numBuckets, funddf) {
+hhiBuckets <- function(numBuckets, inputdf) {
   if (missing(numBuckets) | !is.numeric(numBuckets))
     stop("Check function")
-  if (missing(funddf) | !is.data.frame(funddf))
+  if (missing(inputdf) | !is.data.frame(inputdf))
     stop("Check function")
   
   groupdf <- data.frame(matrix(NA, nrow = numBuckets+1, ncol = 0))
@@ -178,11 +177,11 @@ hhiBuckets <- function(numBuckets, funddf) {
     for (a in seq(from = 0, to = 1, by = 1/numBuckets)) {
         irr <- c()
         investment <- c()
-      for (b in seq(from = 1, to = nrow(funddf), by = 1)) {
-        interest <- funddf[[x]][b]
+      for (b in seq(from = 1, to = nrow(inputdf), by = 1)) {
+        interest <- inputdf[[x]][b]
         if((interest < a+1/numBuckets) & (interest >= a)) {
-          irr <- c(irr, funddf[["Fund_IRR"]][b])
-          investment <- c(investment, funddf[["Total_Investments"]][b])
+          irr <- c(irr, inputdf[["Fund_IRR"]][b])
+          investment <- c(investment, inputdf[["Total_Investments"]][b])
         }
       }
       if(length(irr) > 0) {

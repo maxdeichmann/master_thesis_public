@@ -35,7 +35,7 @@ dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE
 
 
 # drop top and bottom 5% quantile from irr deals
-reduceddf <- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1, 0.9)),]
+reduceddf <- dealdf # dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1, 0.9)),]
 
 #add HHL
 reduceddf <- hhi(reduceddf,"Company_Country", "GeoHHI")
@@ -57,6 +57,7 @@ for (i in 1980:2012) {
 
 # create fund level data
 funddf <- fundData(reduceddf)
+print(funddf)
 
 # create grouped hhi
 groupdf <- hhiBuckets(10,funddf)
