@@ -53,112 +53,28 @@ funddf <- reducedfunddf
 
 
 # linear model
-# linear.model <- lm(Fund_Return ~ AvgHHI, data = reduceddf)
+linear.model <- lm(Fund_Return ~ StageHHI, data = funddf)
+summary(linear.model)
 # # ggplot(funddf, aes(AvgDiversification, Total.Return)) +
 # #   geom_point() +
 # #   geom_smooth(method='lm')
 # summary(linear.model)
 # visreg(linear.model, "AvgHHI")
-
-
-
-
+ggplot() +
+  geom_point(aes(x=funddf$StageHHI, y=funddf$Fund_Return), colour = "red") +
+  geom_line(aes(x=funddf$StageHHI, y=predict(linear.model, newdata = funddf)), colour = "blue") +
+  ggtitle("Linear Regression") +
+  xlab("HHI") +
+  ylab("Fund Return")
 
 # quadratic model
-ggplot(funddf, aes(StageHHI, Fund_Return)) +
-  geom_point() +
-  #geom_smooth(method = 'lm') +
-  geom_smooth(method = 'glm')
+funddf$StageHHI2 = funddf$StageHHI ^ 2
+quadratic.model <- lm(Fund_Return ~ StageHHI + StageHHI2, data = funddf) 
+summary(quadratic.model)
 
-
-model <- lm(funddf$Fund_Return ~ poly(funddf$StageHHI,2))
-summary(model)
-confint(model, level=0.95)
-
-
-
-
-set.seed(20)
-q <- seq(from=0, to=20, by=0.1)
-noise <- rnorm(length(q), mean=10, sd=80)
-noisy.y <- y + noise
-plot(q,noisy.y,col='deepskyblue4',xlab='q',main='Observed data')
-lines(q,y,col='firebrick1',lwd=3)
-model <- lm(noisy.y ~ poly(q,3))
-summary(model)
-plot(fitted(model),residuals(model))
-predicted.intervals <- predict(model,data.frame(x=q),interval='confidence', level=0.99)
-lines(q,predicted.intervals[,1],col='green',lwd=3)
-lines(q,predicted.intervals[,2],col='black',lwd=1)
-lines(q,predicted.intervals[,3],col='black',lwd=1)
-legend("bottomright",c("Observ.","Signal","Predicted"), 
-       col=c("deepskyblue4","red","green"), lwd=3)
-
-
-
-
-
-
-
-
-
-
-avgHHI.model <-
-  lm(Fund_Return ~ AvgHHI + AvgHHI ^ 2, data = reducedfunddf)
-ggplot(reducedfunddf, aes(AvgHHI, Fund_Return)) +
-  geom_point() +
-  geom_smooth(method = 'nls', formula = Total.Return ~ AvgHHI)
-summary(avgHHI.model)
-
-
-ggplot(reducedfunddf, aes(x = AvgHHI, y = Fund_Return)) +
-  xlab("AvgHHI") +
-  ylab("Fund_Return") +
-  stat_smooth(
-    method = 'nls',
-    formula = 'y~x + x^2',
-    method.args = list(start = c(a = 0.1646, b = 9.5e-8)),
-    se = FALSE
-  )
-
-m <- lm(reducedfunddf$Fund_Return ~ poly(reducedfunddf$AvgHHI, 2))   # poly() fits the polynomial with 4+1 terms
-summary(m)
-# ggplot(reducedfunddf,aes(AvgHHI, Fund_Return))+
-#   geom_point()+
-#   geom_line(aes(y=fitted(m)))
-
-predicted <- data.frame(x = reducedfunddf$Fund_Return, y = fitted(m))
-
-ggplot(reducedfunddf, aes(x = AvgHHI, y = Fund_Return)) +
-  ylab("Fund_Return") +
-  xlab("AvgHHI") +
-  geom_point() +
-  # geom_smooth(method = "lm", aes(colour = "Linear")) +
-  # geom_smooth(method = "glm", aes(colour = "Exponential"), formula = y ~ x + x^2)
-  geom_smooth(method="lm", aes(color="Exp Model"), formula= (y ~ x^2 + x), se=FALSE, linetype = 1) +
-  guides(color = guide_legend("Model Type"))
-
-# visreg(quadratic.model, "AvgHHI", trans=exp, ylab="Fund_Return", partial=TRUE)
-# ggplot(reducedfunddf,aes(x=AvgHHI, y=Fund_Return)) + geom_smooth()
-
-
-# qplot(data=funddf[1:10,], aes(x=AvgDiversification, y=Total.Return)) +
-#   stat_summary(fun.data=mean_cl_normal) +
-#   geom_smooth(method='lm')
-
-#geom_smooth(method='lm',formula=y~x)
-
-
-# uniqueGroup <- unique(df$Primary_Industry_Group)
-# uniqueCode <- unique(df$Primary_Industry_Code)
-# uniqueSector <- unique(df$Primary_Industry_Sector)
-
-# qplot(data = funddf, x = funddf$Fund_IRR)
-# linear analysis
-# scatter.smooth(x=funddf$StageHHI, y=funddf$Fund_IRR, main="geo")
-
-# qplot(data = dealdf, x = dealdf$PISHHI, main="test")
-
-# ggplot(data=groupdf, aes(x=bucket, y=AvgDiversification, group=1)) +
-#   geom_line()+
-#   geom_point()
+ggplot() +
+  geom_point(aes(x=funddf$StageHHI, y=funddf$Fund_Return), colour = "red") +
+  geom_line(aes(x=funddf$StageHHI, y=predict(quadratic.model)), colour = "blue") +
+  ggtitle("Polynomial Regression") +
+  xlab("HHI") +
+  ylab("Fund Return")
