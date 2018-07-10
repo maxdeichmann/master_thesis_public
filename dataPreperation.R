@@ -57,18 +57,22 @@ for (i in 1980:2012) {
 
 # create fund level data
 funddf <- fundData(reduceddf)
-print(funddf)
+
+# drop top and bottom 5% quantile from irr deals
+reducedfunddf <- funddf[funddf$Number_Investments > 2,] #quantile(funddf$Number_Investments, probs = c(0.01,1)),]
 
 # create grouped hhi
-groupdf <- hhiBuckets(10,funddf)
+groupdf <- hhiBuckets(10,reducedfunddf)
 
 
 # time series
 # timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
 
 #save data
-excel_export(list(reduceddf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
 save(reduceddf,file="dataPreperation_deal.Rda")
-save(funddf,file="dataPreperation_fund.Rda")
+save(reducedfunddf,file="dataPreperation_fund.Rda")
 save(groupdf,file="dataPreperation_group.Rda")
+setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
+#excel_export(list(reduceddf,reducedfunddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
+

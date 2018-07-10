@@ -96,18 +96,20 @@ fundData <- function(dealdf) {
     "Fund_ID",
     "Fund_IRR",
     "Fund_SD",
-    "Investments",
+    "Number_Investments",
     "Total_Investments",
-    "Total Return",
+    "Fund_Return",
     "GeoHHI",
     "StageHHI",
     "PIGHHI",
     "PICHHI",
-    "PISHHI"
+    "PISHHI",
+    "AvgHHI"
   )
   colClasses = c(
     "integer",
     "integer",
+    "double",
     "double",
     "double",
     "double",
@@ -146,11 +148,17 @@ fundData <- function(dealdf) {
       sd,
       nrow(out),
       sum(out$Deal_Size),
+      wa * sum(out$Deal_Size),
       out$GeoHHI[nrow(out)],
       out$StageHHI[nrow(out)],
       out$PIGHHI[nrow(out)],
       out$PICHHI[nrow(out)],
-      out$PISHHI[nrow(out)]
+      out$PISHHI[nrow(out)],
+      mean(c(out$GeoHHI[nrow(out)],
+           out$StageHHI[nrow(out)],
+           out$PIGHHI[nrow(out)],
+           out$PICHHI[nrow(out)],
+           out$PISHHI[nrow(out)]))
     )
   }
   return(funddf)
