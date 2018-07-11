@@ -99,12 +99,12 @@ fundData <- function(dealdf) {
     "Number_Investments",
     "Total_Investments",
     "Fund_Return",
-    "GeoHHI",
-    "StageHHI",
-    "PIGHHI",
-    "PICHHI",
-    "PISHHI",
-    "AvgHHI"
+    "Fund_GeoHHI",
+    "Fund_StageHHI",
+    "Fund_PIGHHI",
+    "Fund_PICHHI",
+    "Fund_PISHHI",
+    "Fund_AvgHHI"
   )
   colClasses = c(
     "integer",
@@ -204,6 +204,41 @@ hhiBuckets <- function(numBuckets, inputdf) {
   return(groupdf)
   
 }
+
+
+analysis <- function(dependent,independent,df) {
+  for (hhi in independent) {
+    
+    print(hhi)
+    
+    myvars <- c(dependent, hhi)
+    subdf <- df[myvars]
+    colnames(subdf) <- c("y", "x")
+    
+    # linear model
+    linear.model <- lm(y ~ x, data = subdf)
+    print(summary(linear.model))
+    
+    # quadratic model
+    subdf$x2 <- subdf$x^2
+    quadratic.model <- lm(y ~ x + x2, data = subdf) 
+    print(summary(quadratic.model))
+    
+    plot <- ggplot() +
+      geom_point(aes(x=subdf$x, y=subdf$y)) +
+      geom_line(aes(x=subdf$x, y=predict(linear.model, newdata = subdf)), colour = "blue") +
+      geom_line(aes(x=subdf$x, y=predict(quadratic.model, newdata = subdf)), colour = "red") +
+      ggtitle("Linear Regression") + 
+      xlab(hhi) +
+      ylab(dependent)
+    
+    # print(stargazer(linear.model, quadratic.model, title="Results", align=TRUE, type="text"))
+    print(plot)
+  }
+}
+
+
+
 
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102

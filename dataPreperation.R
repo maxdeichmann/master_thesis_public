@@ -35,17 +35,33 @@ dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE
 
 
 # drop top and bottom 5% quantile from irr deals
-reduceddf <- dealdf # dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1, 0.9)),]
+dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.01, 0.99)),]
 
-#add HHL
-reduceddf <- hhi(reduceddf,"Company_Country", "GeoHHI")
-reduceddf <- hhi(reduceddf,"Company_Stage", "StageHHI")
-reduceddf <- hhi(reduceddf,"Primary_Industry_Group", "PIGHHI")
-reduceddf <- hhi(reduceddf,"Primary_Industry_Code", "PICHHI")
-reduceddf <- hhi(reduceddf,"Primary_Industry_Sector", "PISHHI")
+#add HHI on deal level
+hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
+fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI")
+dealdf<- hhi(dealdf,"Company_Country", "GeoHHI")
+dealdf<- hhi(dealdf,"Company_Stage", "StageHHI")
+dealdf<- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
+dealdf<- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
+dealdf<- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
+
+# create fund level data
+funddf <- fundData(dealdf)
+
+# drop top and bottom 5% quantile from irr deals
+funddf <- funddf[funddf$Number_Investments > 2,] #quantile(funddf$Number_Investments, probs = c(0.01,1)),]
+
+# add fund level hhi to deal levels
+dealdf <- merge(dealdf,funddf[ , c(fundhhis, "Fund_ID", "Fund_SD")], by.x = "Investor_fund_ID", by.y = "Fund_ID")
+# for (dealRow in 1:nrow(dealdf)) {
+#   for(fundRow in 1:nrow(funddf)) {
+#     if(dealRow)
+#   }
+# }
 
 # year dummy creation
-reduceddf <- cbind(reduceddf, as.data.frame.matrix(table(sequence(nrow(reduceddf)), substring(reduceddf$Deal_Date,1,4))))
+dealdf<- cbind(dealdf, as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4))))
 
 # experience dummy
 
@@ -55,14 +71,9 @@ for (i in 1980:2012) {
   dummyVector <- c(dummyVector, as.character(i))
 }
 
-# create fund level data
-funddf <- fundData(reduceddf)
-
-# drop top and bottom 5% quantile from irr deals
-reducedfunddf <- funddf[funddf$Number_Investments > 2,] #quantile(funddf$Number_Investments, probs = c(0.01,1)),]
 
 # create grouped hhi
-groupdf <- hhiBuckets(10,reducedfunddf)
+# groupdf <- hhiBuckets(10,funddf)
 
 
 # time series
@@ -70,9 +81,9 @@ groupdf <- hhiBuckets(10,reducedfunddf)
 
 #save data
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
-save(reduceddf,file="dataPreperation_deal.Rda")
-save(reducedfunddf,file="dataPreperation_fund.Rda")
-save(groupdf,file="dataPreperation_group.Rda")
+save(dealdf,file="dataPreperation_deal.Rda")
+save(funddf,file="dataPreperation_fund.Rda")
+# save(groupdf,file="dataPreperation_group.Rda")
 setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
-#excel_export(list(reduceddf,reducedfunddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
+excel_export(list(dealdf,funddf), "dataPreperation.xlsx", table_names=c("deal", "fund"))
 
