@@ -33,9 +33,11 @@ dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE
 # replace Deal size NA with median
 dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE)
 
-
 # drop top and bottom 5% quantile from irr deals
 dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.01, 0.99)),]
+
+# create dummy vector
+controlVector <- c()
 
 #add HHI on deal level
 hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
@@ -54,22 +56,13 @@ funddf <- funddf[funddf$Number_Investments > 2,] #quantile(funddf$Number_Investm
 
 # add fund level hhi to deal levels
 dealdf <- merge(dealdf,funddf[ , c(fundhhis, "Fund_ID", "Fund_SD")], by.x = "Investor_fund_ID", by.y = "Fund_ID")
-# for (dealRow in 1:nrow(dealdf)) {
-#   for(fundRow in 1:nrow(funddf)) {
-#     if(dealRow)
-#   }
-# }
 
 # year dummy creation
-dealdf<- cbind(dealdf, as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4))))
+new <- as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4)))
+controlVector = c(controlVector,colnames(new))
+print(controlVector)
+dealdf<- cbind(dealdf, new)
 
-# experience dummy
-
-# create dummy vector
-dummyVector <- c()
-for (i in 1980:2012) {
-  dummyVector <- c(dummyVector, as.character(i))
-}
 
 
 # create grouped hhi
@@ -81,6 +74,7 @@ for (i in 1980:2012) {
 
 #save data
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
+save(controlVector, file = "controlVector.RData")
 save(dealdf,file="dataPreperation_deal.Rda")
 save(funddf,file="dataPreperation_fund.Rda")
 # save(groupdf,file="dataPreperation_group.Rda")
