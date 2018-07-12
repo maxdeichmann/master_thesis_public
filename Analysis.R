@@ -31,7 +31,7 @@ load("dataPreperation_group.Rda")
 load("controlVector.RData")
 
 # dependent variables
-dealdf$glog <- log(dealdf$GeoHHI)
+# dealdf$glog <- log(dealdf$GeoHHI)
 # ggplot(dealdf, aes(GeoHHI)) + geom_histogram() + theme_minimal()
 # ggplot(dealdf, aes(glog)) + geom_histogram() + theme_minimal()
 # 
@@ -51,88 +51,32 @@ dealdf$glog <- log(dealdf$GeoHHI)
 # ggplot(dealdf, aes(PISHHI)) + geom_histogram() + theme_minimal()
 # ggplot(dealdf, aes(pislog)) + geom_histogram() + theme_minimal()
 
-dealdf$g2 = dealdf$Fund_GeoHHI^2
-dealdf$s2 = dealdf$Fund_StageHHI^2
-dealdf$pig2 = dealdf$Fund_PIGHHI^2
-dealdf$pic2 = dealdf$Fund_PICHHI^2
-dealdf$pis2 = dealdf$Fund_PISHHI^2
-dealdf$avg2 = dealdf$Fund_AvgHHI^2
+# add variables to control vector
+controlVector <- c("Number_Investments", "Total_Investments", controlVector)
 
-model1 <- lm(Fund_SD ~ Fund_GeoHHI+g2+Fund_StageHHI+s2+Fund_PISHHI+pis2 ,data = dealdf)
-summary(model1)
 
 dealdf$lIRR <- log(dealdf$Gross_IRR)
-model2 <- lm(Gross_IRR ~ poly(StageHHI,2), data = dealdf)
+# dealdf$lavg <- log(dealdf$Fund_AvgHHI)
 
-effect_plot(model2, pred = StageHHI, plot.points = TRUE)
-plot_summs(model2, scale = TRUE, plot.distributions = TRUE, inner_ci_level = 0.9)
-export_summs(model2)
-
+is.na(dealdf) <- sapply(dealdf, is.infinite)
+dealdf <- na.omit(dealdf)
 
 
-# deal level analysis
-independentVariables <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI")
-dependentVariable <- "Fund_SD"
+# r^2 of 0,1028 @ irr interval @ 0.05 - 0.95
+# f1 <- formula(paste("Gross_IRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
 
+f1 <- formula(paste("lIRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
 
-# convert variable vector into string
-independent <- independentVariables[1]
-indvector <- paste(controlVector, collapse =" + ")
-# allIndependentPrint <- c(gsub('_','',independent), gsub('_','',paste0("",independent," - squared")), controlVector)
-allVariables <- c(dependentVariable, independentVariables, controlVector)
+model1 <- lm(f1,data = dealdf)
+model2 <- lm(Gross_IRR ~  poly(Fund_AvgHHI,2),data = dealdf)
 
-# create subdf with alternative variable names
-subdf <- dealdf[allVariables]
-colnames(subdf) <- c("y", "x", controlVector)
+effect_plot(model1, pred = Fund_GeoHHI, plot.points = TRUE)
+effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE)
+effect_plot(model1, pred = Fund_PISHHI, plot.points = TRUE)
+plot_summs(model1, scale = TRUE)
+export_summs(model1)
 
-# linear model
-f <- paste(dependentVariable, "~", indvector, collapse=" + ")
-# linear.model <- lm(f, data = subdf)
-linear.model <- lm(y ~ x, data = subdf, x = TRUE)
-
-# quadratic model
-quadratic.model <- lm(y ~ poly(x, 2) + ., data = subdf) 
-# quadratic.model <- lm(y ~ poly(x, 2), data = subdf) 
-
-#newRange <- expand.grid(subdf)
-newRange <- data.frame(x=seq(0,1,length.out=nrow(subdf)), x2=seq(0,1,length.out=nrow(subdf)))
-newdata <- data.frame(x=seq(0, 1, .01))
-#newdata$pred1 <- predict(quadratic.model, newdata)
-
-
-predQ <- predict(quadratic.model)#, newdata = subdf)
-
-plot <- ggplot() +
-  theme_minimal() +
-  geom_point(aes(x=subdf$x, y=subdf$y)) +
-  xlim(0, 1) +
-  geom_line(aes(x=newRange$x, y=predict(linear.model)), colour = "blue") +
-  geom_line(aes(x=newdata$x, y=newdata$pred1), colour = "red") +
-  ggtitle("Regression") + 
-  xlab(independent) +
-  ylab(dependent)
-print(plot)
-
-name <- paste0("",dependent, " - ",independent,".html")
-titel <- paste0(dependent, " - ",independent)
-titel <- gsub('_','',titel)
-depvar <- gsub('_','',dependent)
-indvar <- gsub('_','',independent)
-indvar2 <- gsub('_','',paste0("",independent," - squared"))
-print(titel)
-capture.output(stargazer(linear.model,quadratic.model, title=titel, align=TRUE, type="html", digits=1, out=name,
-                         dep.var.labels=c(depvar),
-                         covariate.labels=c(indvar,indvar2,controlVector,"Constant")))
-
-
-
-
-
-
-
-
-
-
+summary(model1)
 
 
 

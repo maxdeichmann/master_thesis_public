@@ -34,7 +34,7 @@ dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE
 dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE)
 
 # drop top and bottom 5% quantile from irr deals
-dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.01, 0.99)),]
+dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.05, 0.95)),]
 
 # create dummy vector
 controlVector <- c()
@@ -48,6 +48,10 @@ dealdf<- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 
+# average hhi
+dealdf$AvgHHI <- apply(dealdf[,12:16], 1, mean)
+
+
 # create fund level data
 funddf <- fundData(dealdf)
 
@@ -55,14 +59,14 @@ funddf <- fundData(dealdf)
 funddf <- funddf[funddf$Number_Investments > 2,] #quantile(funddf$Number_Investments, probs = c(0.01,1)),]
 
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c(fundhhis, "Fund_ID", "Fund_SD")], by.x = "Investor_fund_ID", by.y = "Fund_ID")
+dealdf <- merge(dealdf,funddf[ , c(fundhhis, "Fund_ID", "Fund_SD", "Number_Investments", "Total_Investments")], by.x = "Investor_fund_ID", by.y = "Fund_ID")
 
 # year dummy creation
 new <- as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4)))
-controlVector = c(controlVector,colnames(new))
-print(controlVector)
+newNames <- paste("Y", colnames(new), sep="")
+colnames(new) <- newNames
+controlVector = c(controlVector,newNames)
 dealdf<- cbind(dealdf, new)
-
 
 
 # create grouped hhi
