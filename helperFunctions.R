@@ -97,18 +97,33 @@ fundData <- function(dealdf) {
     "Fund_IRR",
     "Fund_SD",
     "Number_Investments",
+    "Log_Number_Investments",
     "Total_Investments",
+    "Log_Total_Investments",
     "Fund_Return",
     "Fund_GeoHHI",
     "Fund_StageHHI",
     "Fund_PIGHHI",
     "Fund_PICHHI",
     "Fund_PISHHI",
-    "Fund_AvgHHI"
+    "Fund_AvgHHI",
+    "Fund_Avg_GeoHHI",
+    "Fund_Avg_StageHHI",
+    "Fund_Avg_PIGHHI",
+    "Fund_Avg_PICHHI",
+    "Fund_Avg_PISHHI"
+    
   )
   colClasses = c(
     "integer",
     "integer",
+    "double",
+    "double",
+    "double",
+    "double",
+    "double",
+    "double",
+    "double",
     "double",
     "double",
     "double",
@@ -147,7 +162,9 @@ fundData <- function(dealdf) {
       wa,
       sd,
       nrow(out),
+      log(nrow(out)),
       sum(out$Deal_Size),
+      log(wa * sum(out$Deal_Size)),
       wa * sum(out$Deal_Size),
       out$GeoHHI[nrow(out)],
       out$StageHHI[nrow(out)],
@@ -155,30 +172,31 @@ fundData <- function(dealdf) {
       out$PICHHI[nrow(out)],
       out$PISHHI[nrow(out)],
       mean(c(out$GeoHHI[nrow(out)],
-           out$StageHHI[nrow(out)],
-           out$PIGHHI[nrow(out)],
-           out$PICHHI[nrow(out)],
-           out$PISHHI[nrow(out)]))
+             out$StageHHI[nrow(out)],
+             out$PIGHHI[nrow(out)],
+             out$PICHHI[nrow(out)],
+             out$PISHHI[nrow(out)])),
+      mean(out$GeoHHI),
+      mean(out$StageHHI),
+      mean(out$PIGHHI),
+      mean(out$PICHHI),
+      mean(out$PISHHI)
     )
   }
   return(funddf)
 }
 
 
-hhiBuckets <- function(numBuckets, inputdf) {
+hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
   if (missing(numBuckets) | !is.numeric(numBuckets))
     stop("Check function")
   if (missing(inputdf) | !is.data.frame(inputdf))
     stop("Check function")
-  
+  if (missing(hhis) | !is.vector(hhis))
+    stop("Check function")
+  if (missing(variables) | !is.vector(variables))
+    stop("Check function")
   groupdf <- data.frame(matrix(NA, nrow = numBuckets+1, ncol = 0))
-  
-  hhis <- c("GeoHHI",
-            "StageHHI",
-            "PIGHHI",
-            "PICHHI",
-            "PISHHI")
-  
   
   for (x in hhis) {
     outcomes <- c()
@@ -188,12 +206,12 @@ hhiBuckets <- function(numBuckets, inputdf) {
       for (b in seq(from = 1, to = nrow(inputdf), by = 1)) {
         interest <- inputdf[[x]][b]
         if((interest < a+1/numBuckets) & (interest >= a)) {
-          irr <- c(irr, inputdf[["Fund_IRR"]][b])
-          investment <- c(investment, inputdf[["Total_Investments"]][b])
+          irr <- c(irr, inputdf[[variables[1]]][b])
+          investment <- c(investment, inputdf[[variables[2]]][b])
         }
       }
       if(length(irr) > 0) {
-        outcomes = c(outcomes, weighted.mean(irr,investment,na.rm = TRUE))
+        outcomes = c(outcomes, crossprod(irr,investment)) # weighted.mean ,na.rm = TRUE
       } else {
         outcomes = c(outcomes, 0) 
       }
@@ -208,8 +226,6 @@ hhiBuckets <- function(numBuckets, inputdf) {
 
 analysis <- function(dependent,independent,df) {
   for (hhi in independent) {
-    
-    print(hhi)
     
     myvars <- c(dependent, hhi)
     subdf <- df[myvars]
@@ -237,7 +253,26 @@ analysis <- function(dependent,independent,df) {
   }
 }
 
-
+sdDistance <- function(hhis,df) {
+  if (missing(df) | !is.data.frame(df))
+    stop("Check function - df")
+  if (missing(hhis) | !is.vector(hhis))
+    stop("Check function - hhi")
+  
+  for(hhi in hhis) {
+    mean <- mean(df[[hhi]])
+    sd <- sd(df[[hhi]], na.rm = TRUE)
+    
+    values <- c()
+    for(i in 1:nrow(df)) {
+      value <- (df[[hhi]][i]-mean) / sd
+      values[i] <- value
+    }
+    name <- paste0("SD_",hhi, collapse = "_")
+    df[[name]] <- values
+  }
+  return(df)
+}
 
 
 
