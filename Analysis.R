@@ -115,21 +115,6 @@ dealdf <- na.omit(dealdf)
 # add variables to control vector
 controlVector <- c("Number_Investments", controlVector)
 
-visualizeModel <- function(model,df,dependentVariables) {
-
-  models <- list()
-  for (variable in dependentVariables) {
-
-    print(variable)
-    print(get(variable))
-    new <- effect_plot(model, pred = get(variable), plot.points = TRUE, data = df) + theme_minimal()
-    print(new)
-    models <- list(models, new)
-
-  }
-  plot_grid(models) 
-}
-
 # r^2 of 0,1028 @ irr interval @ 0.05 - 0.95
 # f1 <- formula(paste("Gross_IRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
 # r^2 of 12,38 @ irr + deal size interval of 0.01 + 0.9
@@ -139,37 +124,28 @@ visualizeModel <- function(model,df,dependentVariables) {
 # f2 <- formula(paste("Fund_SD ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
 
 #f1 <- formula(paste("SD_Gross_IRR ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
-f1 <- formula("SD_Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
-f1dep <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
-model1 <- lm(f1,data = dealdf)
-# model2 <- lm(f2,data = funddf)
-print(summary(model1))
 
-# a <- effect_plot(model1, pred = Fund_PIGHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-# b <- effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-# plot_grid(a,b)
-# effect_plot(model1, pred = Fund_PIGHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-# effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-# effect_plot(model1, pred = Fund_GeoHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+
 # plot_summs(model1, scale = TRUE)
 # export_summs(model1)
 
 # summary(model1)
 
-visualizeModel(model1,dealdf,f1dep)
 
 
-toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
-dependent <- "SD_Gross_IRR"
-values <- rep("numeric", length(independent))
 colour <- c("red","blue","black")
 xAxis <- "x"
 yAxis <- "y"
-title <- "Regression"
-df <- dealdf
 
-plotModel(dealdf,dependent,independent,toPredict)
+toPredict <- c("poly(SD_Fund_PIGHHI, 2)","poly(SD_Fund_StageHHI, 2)","poly(SD_Fund_GeoHHI, 2)")
+independent <- c("SD_Fund_PIGHHI","SD_Fund_StageHHI","SD_Fund_GeoHHI")
+dependent <- "SD_Gross_IRR"
+f1 <- formula("SD_Gross_IRR ~ poly(SD_Fund_PIGHHI,2)+poly(SD_Fund_StageHHI,2)+poly(SD_Fund_GeoHHI,2)")
+
+model1 <- lm(f1,data = dealdf)
+print(summary(model1))
+
+plotModel(dealdf,dependent,independent,toPredict,c(-3,3),"HHI",dependent,"Model1")
 
 
 
@@ -233,3 +209,6 @@ plotModel(dealdf,dependent,independent,toPredict)
 #hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
 #dependent <- "Fund_SD"
 #analysis(dependent, hhis, funddf)
+
+
+

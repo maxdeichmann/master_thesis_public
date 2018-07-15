@@ -261,11 +261,12 @@ plotModel <- function(df,
                       dependent,
                       independent,
                       toPredict,
+                      xRange,
                       xAxis,
                       yAxis,
                       title,
                       colour) {
-  
+  print(independent)
   if(missing(xAxis)) {
     xAxis <- "x"
   }
@@ -278,10 +279,13 @@ plotModel <- function(df,
   if(missing(colour)) {
     colour <- c("red", "blue", "black")
   }
+  if(missing(xRange)) {
+    xRange <- c(0,1)
+  }
   values <- rep("numeric", length(independent))
 
   #newRange <- expand.grid(subdf)
-  sequence <- seq(0, 1, length.out = nrow(dealdf))
+  sequence <- seq(xRange[1], xRange[2], length.out = nrow(dealdf))
   newRange <- read.table(text = "",
                          colClasses = values,
                          col.names = independent)
@@ -297,10 +301,10 @@ plotModel <- function(df,
     ggtitle(title) +
     xlab(xAxis) +
     ylab(yAxis) +
-    xlim(0, 1)
+    xlim(xRange[1], xRange[2])
 
   for (i in 1:length(independent)) {
-    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]]), colour = colour[",i,"])")
+    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]]), show.legend = TRUE, colour = colour[",i,"])")
     plot <- plot + eval(parse(text = loop_input))
   }
 
@@ -322,4 +326,19 @@ plotModel <- function(df,
 #   y[x < (qnt[1] - H)] <- NA
 #   y[x > (qnt[2] + H)] <- NA
 #   y
+# }
+
+# visualizeModel <- function(model,df,dependentVariables) {
+#   
+#   models <- list()
+#   for (variable in dependentVariables) {
+#     
+#     print(variable)
+#     print(get(variable))
+#     new <- effect_plot(model, pred = get(variable), plot.points = TRUE, data = df) + theme_minimal()
+#     print(new)
+#     models <- list(models, new)
+#     
+#   }
+#   plot_grid(models) 
 # }
