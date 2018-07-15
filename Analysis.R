@@ -67,13 +67,13 @@ dealdf <- na.omit(dealdf)
 # e <- ggplot() + geom_histogram(data=dealdf, aes(SD_PISHHI)) + theme_minimal()
 # plot_grid(a,b,c,d,e)
 
-a <- ggplot() + geom_histogram(data=funddf, aes(Fund_GeoHHI)) + theme_minimal()
-b <- ggplot() + geom_histogram(data=funddf, aes(Fund_StageHHI)) + theme_minimal()
-c <- ggplot() + geom_histogram(data=funddf, aes(Fund_PIGHHI)) + theme_minimal()
-d <- ggplot() + geom_histogram(data=funddf, aes(Fund_PICHHI)) + theme_minimal()
-e <- ggplot() + geom_histogram(data=funddf, aes(Fund_PISHHI)) + theme_minimal()
-plot_grid(a,b,c,d,e)
-  
+# a <- ggplot() + geom_histogram(data=funddf, aes(Fund_GeoHHI)) + theme_minimal()
+# b <- ggplot() + geom_histogram(data=funddf, aes(Fund_StageHHI)) + theme_minimal()
+# c <- ggplot() + geom_histogram(data=funddf, aes(Fund_PIGHHI)) + theme_minimal()
+# d <- ggplot() + geom_histogram(data=funddf, aes(Fund_PICHHI)) + theme_minimal()
+# e <- ggplot() + geom_histogram(data=funddf, aes(Fund_PISHHI)) + theme_minimal()
+# print(plot_grid(a,b,c,d,e))
+
   
 # ggplot(dealdf, aes(GeoHHI)) + geom_histogram() + theme_minimal()
 # ggplot(dealdf, aes(StageHHI)) + geom_histogram() + theme_minimal()
@@ -87,8 +87,8 @@ plot_grid(a,b,c,d,e)
 # ggplot(dealdf, aes(piclog)) + geom_histogram() + theme_minimal()
 # ggplot(dealdf, aes(pislog)) + geom_histogram() + theme_minimal()
 
-# a <- ggplot(dealdf, aes(Number_Investments)) + geom_histogram() + theme_minimal()
-# b <- ggplot(dealdf, aes(Log_Number_Investments)) + geom_histogram() + theme_minimal()
+# a <- ggplot(dealdf, aes(Total_Investments)) + geom_histogram() + theme_minimal()
+# b <- ggplot(dealdf, aes(Log_Total_Investments)) + geom_histogram() + theme_minimal()
 # plot_grid(a,b)
 # 
 # a <- ggplot(dealdf, aes(Number_Investments)) + geom_histogram() + theme_minimal()
@@ -115,6 +115,20 @@ plot_grid(a,b,c,d,e)
 # add variables to control vector
 controlVector <- c("Number_Investments", controlVector)
 
+visualizeModel <- function(model,df,dependentVariables) {
+
+  models <- list()
+  for (variable in dependentVariables) {
+
+    print(variable)
+    print(get(variable))
+    new <- effect_plot(model, pred = get(variable), plot.points = TRUE, data = df) + theme_minimal()
+    print(new)
+    models <- list(models, new)
+
+  }
+  plot_grid(models) 
+}
 
 # r^2 of 0,1028 @ irr interval @ 0.05 - 0.95
 # f1 <- formula(paste("Gross_IRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
@@ -122,39 +136,40 @@ controlVector <- c("Number_Investments", controlVector)
 # f1 <- formula(paste("StageHHI ~ poly(bucket,2)"))
 # r^2 of 10; very high acceptance of variables
 # f1 <- formula(paste("Fund_SD ~ Fund_PIGHHI + Fund_StageHHI + Fund_GeoHHI +", paste(controlVector, collapse=" + ")))
+# f2 <- formula(paste("Fund_SD ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
 
-# f1 <- formula(paste("Fund_SD ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
-
-f1 <- formula(paste("SD_Gross_IRR ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
-
+#f1 <- formula(paste("SD_Gross_IRR ~ poly(Fund_PIGHHI,2) + poly(Fund_StageHHI,2) + poly(Fund_GeoHHI,2) +", paste(controlVector, collapse=" + ")))
+f1 <- formula("SD_Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
+f1dep <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
 model1 <- lm(f1,data = dealdf)
+# model2 <- lm(f2,data = funddf)
 print(summary(model1))
 
-effect_plot(model1, pred = Fund_PIGHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-effect_plot(model1, pred = Fund_GeoHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
-plot_summs(model1, scale = TRUE)
-export_summs(model1)
+# a <- effect_plot(model1, pred = Fund_PIGHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+# b <- effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+# plot_grid(a,b)
+# effect_plot(model1, pred = Fund_PIGHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+# effect_plot(model1, pred = Fund_StageHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+# effect_plot(model1, pred = Fund_GeoHHI, plot.points = TRUE, data = dealdf, point.size = 0.1)
+# plot_summs(model1, scale = TRUE)
+# export_summs(model1)
 
-summary(model1)
+# summary(model1)
+
+visualizeModel(model1,dealdf,f1dep)
 
 
-#newRange <- expand.grid(subdf)
-newRange <- data.frame(Fund_PIGHHI = seq(0, 1, length.out = nrow(dealdf)),Fund_StageHHI = seq(0, 1, length.out = nrow(dealdf)),Fund_GeoHHI = seq(0, 1, length.out = nrow(dealdf)))
-newRange$Fund_PIGHHI <- predict(model1, newRange)
+toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+dependent <- "SD_Gross_IRR"
+values <- rep("numeric", length(independent))
+colour <- c("red","blue","black")
+xAxis <- "x"
+yAxis <- "y"
+title <- "Regression"
+df <- dealdf
 
-
-plot <- ggplot() +
-  theme_minimal() +
-  xlim(0, 1) +
-  geom_point(aes(x = dealdf$Fund_PIGHHI, y = dealdf$SD_Gross_IRR), colour = "red") +
-  geom_point(aes(x = dealdf$Fund_StageHHI, y = dealdf$SD_Gross_IRR), colour = "blue") +
-  geom_point(aes(x = dealdf$Fund_GeoHHI, y = dealdf$SD_Gross_IRR)) +
-  geom_line(aes(x = newdata$x, y = newRange$Fund_PIGHHI), colour = "red") +
-  ggtitle("Regression") +
-  xlab("SD_HHI") +
-  ylab("SD_IRR")
-print(plot)
+plotModel(dealdf,dependent,independent,toPredict)
 
 
 

@@ -223,36 +223,6 @@ hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
   
 }
 
-
-analysis <- function(dependent,independent,df) {
-  for (hhi in independent) {
-    
-    myvars <- c(dependent, hhi)
-    subdf <- df[myvars]
-    colnames(subdf) <- c("y", "x")
-    
-    # linear model
-    linear.model <- lm(y ~ x, data = subdf)
-    print(summary(linear.model))
-    
-    # quadratic model
-    subdf$x2 <- subdf$x^2
-    quadratic.model <- lm(y ~ x + x2, data = subdf) 
-    print(summary(quadratic.model))
-    
-    plot <- ggplot() +
-      geom_point(aes(x=subdf$x, y=subdf$y)) +
-      geom_line(aes(x=subdf$x, y=predict(linear.model, newdata = subdf)), colour = "blue") +
-      geom_line(aes(x=subdf$x, y=predict(quadratic.model, newdata = subdf)), colour = "red") +
-      ggtitle("Linear Regression") + 
-      xlab(hhi) +
-      ylab(dependent)
-    
-    # print(stargazer(linear.model, quadratic.model, title="Results", align=TRUE, type="text"))
-    print(plot)
-  }
-}
-
 sdDistance <- function(hhis,df) {
   if (missing(df) | !is.data.frame(df))
     stop("Check function - df")
@@ -274,6 +244,50 @@ sdDistance <- function(hhis,df) {
   return(df)
 }
 
+
+
+plotModel <- function(df,
+                      dependent,
+                      independent,
+                      toPredict,
+                      xAxis = "x",
+                      xAxis = "y",
+                      title = "Title",
+                      colour = c("red","blue","black")) {
+  values <- rep("numeric", length(independent))
+  
+  #newRange <- expand.grid(subdf)
+  sequence <- seq(0, 1, length.out = nrow(dealdf))
+  newRange <- read.table(text = "",
+                         colClasses = values,
+                         col.names = independent)
+  
+  for(element in sequence) {
+    newRange[nrow(newRange) + 1, ] = rep(element,length(independent))
+  }
+  
+  newValues <- predict(model1, newRange,type = "terms")
+  
+  plot <- ggplot() +
+    theme_minimal() +
+    ggtitle(title) +
+    xlab(xAxis) +
+    ylab(yAxis) +
+    xlim(0, 1)
+  
+  for(i in 1:length(independent)) {
+    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]]), colour = colour[",i,"])")
+    plot <- plot + eval(parse(text=loop_input)) 
+  }
+  
+  for (i in 1:length(toPredict)) {
+    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]]), colour = colour[i])")
+    plot <- plot + eval(parse(text=loop_input)) 
+    
+  }
+  print(plot)
+  return(plot)
+}
 
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
