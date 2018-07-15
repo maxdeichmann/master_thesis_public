@@ -1,5 +1,11 @@
 #import libraries
-library(diverse)
+library(plyr)
+library(ggplot2)
+library(jtools)
+library(visreg)
+library(stargazer)
+library(huxtable)
+library(cowplot)
 
 # calculate and append hhi for deals
 hhi <- function(df, variable, HHIName) {
@@ -25,12 +31,11 @@ hhi <- function(df, variable, HHIName) {
   
   #loop through funds
   for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
-    
     # create fund subset
     subdf <- subset(df, Investor_fund_ID == funds[a])
     
     # sort by date
-    out <- subdf[order(as.Date(subdf$Deal_Date)), ]
+    out <- subdf[order(as.Date(subdf$Deal_Date)),]
     
     # get column of selected variable
     data <- out[[variable]]
@@ -44,12 +49,10 @@ hhi <- function(df, variable, HHIName) {
     
     # loop rows
     for (i in seq(from = 1, to = length(data))) {
-      
       # copy data if row larger than 1
       if (i > 1) {
         # go through the current column
         for (x in seq(from = 1, to = length(uniqueData))) {
-          
           # copy values from last column
           hhiMatrix[x, i] <- hhiMatrix[x, i - 1]
         }
@@ -63,7 +66,8 @@ hhi <- function(df, variable, HHIName) {
     }
     
     # calculate HHI for the entire matrix at every investment stage of the fund
-    hhiReturn <- diversity(hhiMatrix, type = 'hh', category_row = TRUE)
+    hhiReturn <-
+      diversity(hhiMatrix, type = 'hh', category_row = TRUE)
     
     # clculate (1 - HHI) to have diversification = 1 and specialisation = 0
     for (i in 1:nrow(hhiReturn)) {
@@ -71,7 +75,8 @@ hhi <- function(df, variable, HHIName) {
     }
     
     # naming
-    hhiReturn <- hhiReturn[order(as.numeric(rownames(hhiReturn))), ,drop = FALSE]
+    hhiReturn <-
+      hhiReturn[order(as.numeric(rownames(hhiReturn))), , drop = FALSE]
     assign('hhiReturn', hhiReturn, pos = .GlobalEnv)
     
     # manage output
@@ -87,7 +92,6 @@ hhi <- function(df, variable, HHIName) {
 
 # crate dataframe on fund level
 fundData <- function(dealdf) {
-  
   if (!is.data.frame(dealdf))
     stop("df must be data frame")
   
@@ -137,8 +141,8 @@ fundData <- function(dealdf) {
   )
   
   funddf <- read.table(text = "",
-               colClasses = colClasses,
-               col.names = col.names)
+                       colClasses = colClasses,
+                       col.names = col.names)
   
   # get number of funds
   funds <- unique(dealdf$Investor_fund_ID)
@@ -146,18 +150,17 @@ fundData <- function(dealdf) {
   
   #loop through funds
   for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
-    
     # create fund subset
     subdf <- subset(dealdf, Investor_fund_ID == funds[a])
     
     # sort by date
-    out <- subdf[order(as.Date(subdf$Deal_Date)), ]
+    out <- subdf[order(as.Date(subdf$Deal_Date)),]
     # weighted average of irr to get fund irr removing na
     wa <- weighted.mean(out$Gross_IRR, out$Deal_Size, na.rm = TRUE)
     sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
     # create row
-    funddf[nrow(funddf) + 1, ] = list(
+    funddf[nrow(funddf) + 1,] = list(
       out$Investor_fund_ID[nrow(out)],
       wa,
       sd,
@@ -171,11 +174,15 @@ fundData <- function(dealdf) {
       out$PIGHHI[nrow(out)],
       out$PICHHI[nrow(out)],
       out$PISHHI[nrow(out)],
-      mean(c(out$GeoHHI[nrow(out)],
-             out$StageHHI[nrow(out)],
-             out$PIGHHI[nrow(out)],
-             out$PICHHI[nrow(out)],
-             out$PISHHI[nrow(out)])),
+      mean(
+        c(
+          out$GeoHHI[nrow(out)],
+          out$StageHHI[nrow(out)],
+          out$PIGHHI[nrow(out)],
+          out$PICHHI[nrow(out)],
+          out$PISHHI[nrow(out)]
+        )
+      ),
       mean(out$GeoHHI),
       mean(out$StageHHI),
       mean(out$PIGHHI),
@@ -196,24 +203,28 @@ hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
     stop("Check function")
   if (missing(variables) | !is.vector(variables))
     stop("Check function")
-  groupdf <- data.frame(matrix(NA, nrow = numBuckets+1, ncol = 0))
+  groupdf <- data.frame(matrix(NA, nrow = numBuckets + 1, ncol = 0))
   
   for (x in hhis) {
     outcomes <- c()
-    for (a in seq(from = 0, to = 1, by = 1/numBuckets)) {
-        irr <- c()
-        investment <- c()
-      for (b in seq(from = 1, to = nrow(inputdf), by = 1)) {
+    for (a in seq(from = 0,
+                  to = 1,
+                  by = 1 / numBuckets)) {
+      irr <- c()
+      investment <- c()
+      for (b in seq(from = 1,
+                    to = nrow(inputdf),
+                    by = 1)) {
         interest <- inputdf[[x]][b]
-        if((interest < a+1/numBuckets) & (interest >= a)) {
+        if ((interest < a + 1 / numBuckets) & (interest >= a)) {
           irr <- c(irr, inputdf[[variables[1]]][b])
           investment <- c(investment, inputdf[[variables[2]]][b])
         }
       }
-      if(length(irr) > 0) {
-        outcomes = c(outcomes, crossprod(irr,investment)) # weighted.mean ,na.rm = TRUE
+      if (length(irr) > 0) {
+        outcomes = c(outcomes, crossprod(irr, investment)) # weighted.mean ,na.rm = TRUE
       } else {
-        outcomes = c(outcomes, 0) 
+        outcomes = c(outcomes, 0)
       }
     }
     groupdf[[x]] <- outcomes
@@ -223,22 +234,22 @@ hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
   
 }
 
-sdDistance <- function(hhis,df) {
+sdDistance <- function(hhis, df) {
   if (missing(df) | !is.data.frame(df))
     stop("Check function - df")
   if (missing(hhis) | !is.vector(hhis))
     stop("Check function - hhi")
   
-  for(hhi in hhis) {
+  for (hhi in hhis) {
     mean <- mean(df[[hhi]])
     sd <- sd(df[[hhi]], na.rm = TRUE)
     
     values <- c()
-    for(i in 1:nrow(df)) {
-      value <- (df[[hhi]][i]-mean) / sd
+    for (i in 1:nrow(df)) {
+      value <- (df[[hhi]][i] - mean) / sd
       values[i] <- value
     }
-    name <- paste0("SD_",hhi, collapse = "_")
+    name <- paste0("SD_", hhi, collapse = "_")
     df[[name]] <- values
   }
   return(df)
@@ -250,40 +261,53 @@ plotModel <- function(df,
                       dependent,
                       independent,
                       toPredict,
-                      xAxis = "x",
-                      xAxis = "y",
-                      title = "Title",
-                      colour = c("red","blue","black")) {
-  values <- rep("numeric", length(independent))
+                      xAxis,
+                      yAxis,
+                      title,
+                      colour) {
   
+  if(missing(xAxis)) {
+    xAxis <- "x"
+  }
+  if(missing(yAxis)) {
+    yAxis <- "y"
+  }
+  if(missing(title)) {
+    title <- "Title"
+  }
+  if(missing(colour)) {
+    colour <- c("red", "blue", "black")
+  }
+  values <- rep("numeric", length(independent))
+
   #newRange <- expand.grid(subdf)
   sequence <- seq(0, 1, length.out = nrow(dealdf))
   newRange <- read.table(text = "",
                          colClasses = values,
                          col.names = independent)
-  
-  for(element in sequence) {
-    newRange[nrow(newRange) + 1, ] = rep(element,length(independent))
+
+  for (element in sequence) {
+    newRange[nrow(newRange) + 1,] = rep(element, length(independent))
   }
-  
-  newValues <- predict(model1, newRange,type = "terms")
-  
+
+  newValues <- predict(model1, newRange, type = "terms")
+
   plot <- ggplot() +
     theme_minimal() +
     ggtitle(title) +
     xlab(xAxis) +
     ylab(yAxis) +
     xlim(0, 1)
-  
-  for(i in 1:length(independent)) {
+
+  for (i in 1:length(independent)) {
     loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]]), colour = colour[",i,"])")
-    plot <- plot + eval(parse(text=loop_input)) 
+    plot <- plot + eval(parse(text = loop_input))
   }
-  
+
   for (i in 1:length(toPredict)) {
-    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]]), colour = colour[i])")
-    plot <- plot + eval(parse(text=loop_input)) 
-    
+    loop_input <-
+      paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]]), colour = colour[i])")
+    plot <- plot + eval(parse(text = loop_input))
   }
   print(plot)
   return(plot)
