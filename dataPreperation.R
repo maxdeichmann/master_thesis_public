@@ -53,8 +53,8 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Secondary Transaction - Private" ]
 dealdf$Company_Stage[dealdf$Company_Stage == "PIPE" ] <- "Later Stage VC"
 dealdf$Company_Stage[dealdf$Company_Stage == "Seed Round" ] <- "Early Stage VC"
 dealdf$Company_Stage[dealdf$Company_Stage == "Spin-Off" ] <- "Early Stage VC"
-dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage" ] <- "Late Stage"
-
+dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage VC" ] <- "Late Stage"
+dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 
 
 barplot(table(dealdf$Company_Stage))

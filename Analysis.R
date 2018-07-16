@@ -131,26 +131,41 @@ controlVector <- c("Number_Investments", controlVector)
 
 # summary(model1)
 
-
-
-xAxis <- "x"
-yAxis <- "y"
-
-toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+# check all data for IRR
+toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
 dependent <- "Gross_IRR"
-f1 <- formula(paste("Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+f1 <- formula(paste("Gross_IRR ~ poly(Fund_PICHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
 model1 <- lm(f1,data = dealdf)
-plotModel(model1,dealdf,dependent,independent,toPredict,c(0,1),"HHI",dependent,"Model1")
+plotModel(model1,dealdf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model1")
 
-toPredict2 <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent2 <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+# check late stage for IRR
+latedf<- dealdf[dealdf$Company_Stage == "Late Stage",]
+toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
+dependent <- "Gross_IRR"
+f2 <- formula(paste("Gross_IRR ~ poly(Fund_PISHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+model2 <- lm(f2,data = latedf)
+plotModel(model2,latedf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model2 - LS")
+
+# check early stage for IRR
+earlydf<- dealdf[dealdf$Company_Stage == "Early Stage",]
+toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
+dependent <- "Gross_IRR"
+f3 <- formula(paste("Gross_IRR ~ poly(Fund_PISHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+model3 <- lm(f3,data = earlydf)
+plotModel(model3,earlydf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model3 - ES")
+
+
+toPredict2 <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent2 <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
 dependent2 <- "Fund_SD"
-f2 <- formula("Fund_SD ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
-model2 <- lm(f2,data = funddf)
-plotModel(model2,funddf,dependent2,independent2,toPredict2,c(0,1),"HHI",dependent2,"Model2")
+f4 <- formula("Fund_SD ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
+model4 <- lm(f4,data = funddf)
+plotModel(model4,funddf,dependent2,independent2,controlVector,toPredict2,c(0,1),"HHI",dependent2,"Model4")
 
-output <- huxreg("Gross_IRR" = model1, "Fund_SD" = model2)
+output <- huxreg("Gross_IRR" = model1, "Gross_IRR - LS" = model2,  "Gross_IRR - ES" = model3, "Fund_SD" = model4)
 print(output)
 
 

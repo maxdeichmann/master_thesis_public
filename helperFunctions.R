@@ -264,6 +264,7 @@ plotModel <- function(model,
                       df,
                       dependent,
                       independent,
+                      control,
                       toPredict,
                       xRange,
                       xAxis,
@@ -281,17 +282,15 @@ plotModel <- function(model,
   if(missing(xRange)) {
     xRange <- c(0,1)
   }
-  values <- rep("numeric", length(independent))
+  values <- rep("numeric", length(c(independent,control)))
   legendTitle <- "Independent variables"
-
-  sequence <- seq(xRange[1], xRange[2], length.out = nrow(dealdf))
+  sequence <- seq(xRange[1], xRange[2], length.out = nrow(df))
   newRange <- read.table(text = "",
                          colClasses = values,
-                         col.names = independent)
+                         col.names = c(independent,control))
   for (element in sequence) {
-    newRange[nrow(newRange) + 1,] = rep(element, length(independent))
+    newRange[nrow(newRange) + 1,] = rep(element, length(c(independent,control)))
   }
-
   newValues <- predict(model, newRange, type = "terms")
   plot <- ggplot() +
     ggtitle(title) +
@@ -307,7 +306,7 @@ plotModel <- function(model,
     plot <- plot + eval(parse(text = loop_input))
   }
 
-  for (i in 1:length(toPredict)) {
+  for (i in 1:length(independent)) {
     loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
