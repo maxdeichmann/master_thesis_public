@@ -59,7 +59,8 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage" ] <- "Late Stage"
 
 barplot(table(dealdf$Company_Stage))
 ggplot(data=dealdf, aes(x=Company_Stage)) +
-  geom_bar(stat="identity")
+  theme_minimal() +
+  geom_bar()
 
 # quantile filtering
 # dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1,0.9)) & dealdf$Deal_Size < quantile(dealdf$Deal_Size, probs = c(0.1, 0.9)),]
@@ -89,10 +90,9 @@ dealdf$AvgHHI <- rowMeans(dealdf[c('GeoHHI', 'StageHHI', 'PIGHHI')])
 # total return
 dealdf$Total_Return <- dealdf$Gross_IRR * dealdf$Deal_Size
 
-
 # create fund level data
 funddf <- fundData(dealdf)
-funddf <- sdDistance(fundhhis,funddf)
+funddf <- sdDistance(c(fundhhis,"Fund_SD"),funddf)
 
 # add fund level hhi to deal levels
 dealdf <- merge(dealdf,funddf[ , c("Fund_ID", "Fund_SD", "Number_Investments", "Log_Number_Investments", "Total_Investments", "Log_Total_Investments",fundhhis, sdfundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")

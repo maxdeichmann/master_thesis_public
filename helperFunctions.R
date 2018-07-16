@@ -6,6 +6,9 @@ library(visreg)
 library(stargazer)
 library(huxtable)
 library(cowplot)
+library(diverse)
+library(ggplot2)
+library(gridExtra)
 
 # calculate and append hhi for deals
 hhi <- function(df, variable, HHIName) {
@@ -257,16 +260,15 @@ sdDistance <- function(hhis, df) {
 
 
 
-plotModel <- function(df,
+plotModel <- function(model,
+                      df,
                       dependent,
                       independent,
                       toPredict,
                       xRange,
                       xAxis,
                       yAxis,
-                      title,
-                      colour) {
-  print(independent)
+                      title) {
   if(missing(xAxis)) {
     xAxis <- "x"
   }
@@ -276,41 +278,37 @@ plotModel <- function(df,
   if(missing(title)) {
     title <- "Title"
   }
-  if(missing(colour)) {
-    colour <- c("red", "blue", "black")
-  }
   if(missing(xRange)) {
     xRange <- c(0,1)
   }
   values <- rep("numeric", length(independent))
+  legendTitle <- "Independent variables"
 
-  #newRange <- expand.grid(subdf)
   sequence <- seq(xRange[1], xRange[2], length.out = nrow(dealdf))
   newRange <- read.table(text = "",
                          colClasses = values,
                          col.names = independent)
-
   for (element in sequence) {
     newRange[nrow(newRange) + 1,] = rep(element, length(independent))
   }
 
-  newValues <- predict(model1, newRange, type = "terms")
-
+  newValues <- predict(model, newRange, type = "terms")
   plot <- ggplot() +
-    theme_minimal() +
     ggtitle(title) +
     xlab(xAxis) +
     ylab(yAxis) +
-    xlim(xRange[1], xRange[2])
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    xlim(xRange[1], xRange[2]) +
+    scale_colour_discrete(legendTitle)
 
   for (i in 1:length(independent)) {
-    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]]), show.legend = TRUE, colour = colour[",i,"])")
+    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
 
   for (i in 1:length(toPredict)) {
-    loop_input <-
-      paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]]), colour = colour[i])")
+    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
   print(plot)

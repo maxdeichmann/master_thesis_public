@@ -116,7 +116,7 @@ dealdf <- na.omit(dealdf)
 controlVector <- c("Number_Investments", controlVector)
 
 # r^2 of 0,1028 @ irr interval @ 0.05 - 0.95
-# f1 <- formula(paste("Gross_IRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
+#f1 <- formula(paste("Gross_IRR ~ Fund_GeoHHI + Fund_StageHHI + Fund_PISHHI + ", paste(controlVector, collapse=" + ")))
 # r^2 of 12,38 @ irr + deal size interval of 0.01 + 0.9
 # f1 <- formula(paste("StageHHI ~ poly(bucket,2)"))
 # r^2 of 10; very high acceptance of variables
@@ -133,24 +133,25 @@ controlVector <- c("Number_Investments", controlVector)
 
 
 
-colour <- c("red","blue","black")
 xAxis <- "x"
 yAxis <- "y"
 
-toPredict <- c("poly(SD_Fund_PIGHHI, 2)","poly(SD_Fund_StageHHI, 2)","poly(SD_Fund_GeoHHI, 2)")
-independent <- c("SD_Fund_PIGHHI","SD_Fund_StageHHI","SD_Fund_GeoHHI")
-dependent <- "SD_Gross_IRR"
-f1 <- formula("SD_Gross_IRR ~ poly(SD_Fund_PIGHHI,2)+poly(SD_Fund_StageHHI,2)+poly(SD_Fund_GeoHHI,2)")
-
+toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+dependent <- "Gross_IRR"
+f1 <- formula(paste("Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
 model1 <- lm(f1,data = dealdf)
-print(summary(model1))
+plotModel(model1,dealdf,dependent,independent,toPredict,c(0,1),"HHI",dependent,"Model1")
 
-plotModel(dealdf,dependent,independent,toPredict,c(-3,3),"HHI",dependent,"Model1")
+toPredict2 <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent2 <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+dependent2 <- "Fund_SD"
+f2 <- formula("Fund_SD ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
+model2 <- lm(f2,data = funddf)
+plotModel(model2,funddf,dependent2,independent2,toPredict2,c(0,1),"HHI",dependent2,"Model2")
 
-
-
-
-
+output <- huxreg("Gross_IRR" = model1, "Fund_SD" = model2)
+print(output)
 
 
 # for (hhi in independent) {
