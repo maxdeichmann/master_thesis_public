@@ -56,12 +56,6 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Spin-Off" ] <- "Early Stage VC"
 dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage VC" ] <- "Late Stage"
 dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 
-
-barplot(table(dealdf$Company_Stage))
-ggplot(data=dealdf, aes(x=Company_Stage)) +
-  theme_minimal() +
-  geom_bar()
-
 # quantile filtering
 # dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1,0.9)) & dealdf$Deal_Size < quantile(dealdf$Deal_Size, probs = c(0.1, 0.9)),]
 # dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.05, 0.95)),]
@@ -72,30 +66,37 @@ controlVector <- c()
 
 #add HHI on deal level
 hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
-fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_Avg_GeoHHI","Fund_Avg_StageHHI","Fund_Avg_PIGHHI","Fund_Avg_PICHHI","Fund_Avg_PISHHI", "Fund_AvgHHI")
-sdfundhhis <- c("SD_Fund_GeoHHI","SD_Fund_StageHHI","SD_Fund_PIGHHI","SD_Fund_PICHHI","SD_Fund_PISHHI", "SD_Fund_Avg_GeoHHI","SD_Fund_Avg_StageHHI","SD_Fund_Avg_PIGHHI","SD_Fund_Avg_PICHHI","SD_Fund_Avg_PISHHI","SD_Fund_AvgHHI")
+fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI","LFund_GeoHHI","LFund_StageHHI","LFund_PIGHHI","LFund_PICHHI","LFund_PISHHI", "LFund_AvgHHI")
+# sdfundhhis <- c("SD_Fund_GeoHHI","SD_Fund_StageHHI","SD_Fund_PIGHHI","SD_Fund_PICHHI","SD_Fund_PISHHI", "SD_Fund_Avg_GeoHHI","SD_Fund_Avg_StageHHI","SD_Fund_Avg_PIGHHI","SD_Fund_Avg_PICHHI","SD_Fund_Avg_PISHHI","SD_Fund_AvgHHI")
 dealdf<- hhi(dealdf,"Company_Country", "GeoHHI")
 dealdf<- hhi(dealdf,"Company_Stage", "StageHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 
+# add log variables
+dealdf$LGeoHHI = log(max(dealdf$GeoHHI) - dealdf$GeoHHI)
+dealdf$LStageHHI = log(max(dealdf$StageHHI) - dealdf$StageHHI)
+dealdf$LPIGHHI = log(max(dealdf$PIGHHI) - dealdf$PIGHHI)
+dealdf$LPICHHI = log(max(dealdf$PICHHI) - dealdf$PICHHI)
+dealdf$LPISHHI = log(max(dealdf$PISHHI) - dealdf$PISHHI)
+
 # add sd differences from mean
-dealdf <- sdDistance(c(hhis,"Gross_IRR"),dealdf)
+#dealdf <- sdDistance(c(hhis,"Gross_IRR"),dealdf)
 
 # average hhi
 #dealdf$AvgHHI <- apply(dealdf[,12:16], 1, mean)
-dealdf$AvgHHI <- rowMeans(dealdf[c('GeoHHI', 'StageHHI', 'PIGHHI')])
+#dealdf$AvgHHI <- rowMeans(dealdf[c('GeoHHI', 'StageHHI', 'PIGHHI')])
 
 # total return
 dealdf$Total_Return <- dealdf$Gross_IRR * dealdf$Deal_Size
 
 # create fund level data
 funddf <- fundData(dealdf)
-funddf <- sdDistance(c(fundhhis,"Fund_SD"),funddf)
+#funddf <- sdDistance(c(fundhhis,"Fund_SD"),funddf)
 
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c("Fund_ID", "Fund_SD", "Number_Investments", "Log_Number_Investments", "Total_Investments", "Log_Total_Investments",fundhhis, sdfundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")
+dealdf <- merge(dealdf,funddf[ , c("Fund_ID", "Fund_SD", "Number_Investments", "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")
 
 # year dummy creation
 new <- as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4)))
@@ -104,6 +105,10 @@ colnames(new) <- newNames
 controlVector = c(controlVector,newNames)
 dealdf<- cbind(dealdf, new)
 
+# america dummy
+dummy <- as.numeric(dealdf$Company_Country == "United States")
+dealdf$UnitedStates = dummy
+controlVector <- c(controlVector,"UnitedStates")
 
 # create grouped hhi based on crossproduct
 # groupdf <- hhiBuckets(10,funddf,c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI"))

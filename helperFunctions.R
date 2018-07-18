@@ -104,9 +104,9 @@ fundData <- function(dealdf) {
     "Fund_IRR",
     "Fund_SD",
     "Number_Investments",
-    "Log_Number_Investments",
+    "LNumber_Investments",
     "Total_Investments",
-    "Log_Total_Investments",
+    "LTotal_Investments",
     "Fund_Return",
     "Fund_GeoHHI",
     "Fund_StageHHI",
@@ -114,11 +114,12 @@ fundData <- function(dealdf) {
     "Fund_PICHHI",
     "Fund_PISHHI",
     "Fund_AvgHHI",
-    "Fund_Avg_GeoHHI",
-    "Fund_Avg_StageHHI",
-    "Fund_Avg_PIGHHI",
-    "Fund_Avg_PICHHI",
-    "Fund_Avg_PISHHI"
+    "LFund_GeoHHI",
+    "LFund_StageHHI",
+    "LFund_PIGHHI",
+    "LFund_PICHHI",
+    "LFund_PISHHI",
+    "LFund_AvgHHI"
     
   )
   colClasses = c(
@@ -177,20 +178,21 @@ fundData <- function(dealdf) {
       out$PIGHHI[nrow(out)],
       out$PICHHI[nrow(out)],
       out$PISHHI[nrow(out)],
-      mean(
-        c(
-          out$GeoHHI[nrow(out)],
-          out$StageHHI[nrow(out)],
-          out$PIGHHI[nrow(out)],
-          out$PICHHI[nrow(out)],
-          out$PISHHI[nrow(out)]
-        )
-      ),
-      mean(out$GeoHHI),
-      mean(out$StageHHI),
-      mean(out$PIGHHI),
-      mean(out$PICHHI),
-      mean(out$PISHHI)
+      mean(c(out$GeoHHI[nrow(out)],
+            out$StageHHI[nrow(out)],
+            out$PIGHHI[nrow(out)],
+            out$PICHHI[nrow(out)],
+            out$PISHHI[nrow(out)])),
+      out$LGeoHHI[nrow(out)],
+      out$LStageHHI[nrow(out)],
+      out$LPIGHHI[nrow(out)],
+      out$LPICHHI[nrow(out)],
+      out$LPISHHI[nrow(out)],
+      mean(c(out$LGeoHHI[nrow(out)],
+            out$LStageHHI[nrow(out)],
+            out$LPIGHHI[nrow(out)],
+            out$LPICHHI[nrow(out)],
+            out$LPISHHI[nrow(out)]))
     )
   }
   return(funddf)
@@ -282,16 +284,23 @@ plotModel <- function(model,
   if(missing(xRange)) {
     xRange <- c(0,1)
   }
-  values <- rep("numeric", length(c(independent,control)))
+  print(independent)
+  values <- rep("numeric", length(independent))
   legendTitle <- "Independent variables"
   sequence <- seq(xRange[1], xRange[2], length.out = nrow(df))
   newRange <- read.table(text = "",
                          colClasses = values,
-                         col.names = c(independent,control))
+                         col.names = independent) #c(independent,control)
   for (element in sequence) {
-    newRange[nrow(newRange) + 1,] = rep(element, length(c(independent,control)))
+    newRange[nrow(newRange) + 1,] = rep(element, length(independent))
   }
-  newValues <- predict(model, newRange, type = "terms")
+  newValues <- predict.lm(model, newRange) #, type = "terms", terms = independent
+  pred <- make_predictions(model = model, pred = independent[1])
+  print(pred)
+  
+  
+  print(plot(newValues))
+  print(newValues)
   plot <- ggplot() +
     ggtitle(title) +
     xlab(xAxis) +

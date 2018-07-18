@@ -14,7 +14,7 @@ graphics.off()
 #Import required libraries
 library(plyr)
 library(ggplot2)
-library(jtools)
+library(jtools) #https://cran.r-project.org/web/packages/jtools/vignettes/summ.html
 library(visreg)
 library(stargazer)
 library(huxtable)
@@ -31,6 +31,19 @@ load("dataPreperation_fund.Rda")
 load("dataPreperation_group.Rda")
 load("controlVector.RData")
 
+# filter for non errors
+# is.na(dealdf) <- sapply(dealdf, is.infinite)
+# dealdf <- na.omit(dealdf)
+
+is.na(funddf) <- sapply(funddf, is.infinite)
+subfunddf <- na.omit(funddf)
+
+# stGE DISTRIBUTION
+# barplot(table(dealdf$Company_Stage))
+# ggplot(data=dealdf, aes(x=Company_Stage)) +
+#   theme_minimal() +
+#   geom_bar()
+
 # group analysis
 # ggplot(groupdf, aes(bucket, GeoHHI)) + geom_point() + theme_minimal() + geom_smooth()
 # ggplot(groupdf, aes(bucket, StageHHI)) + geom_point() + theme_minimal() + geom_smooth()
@@ -38,26 +51,19 @@ load("controlVector.RData")
 # ggplot(groupdf, aes(bucket, PICHHI)) + geom_point() + theme_minimal() + geom_smooth()
 # ggplot(groupdf, aes(bucket, PISHHI)) + geom_point() + theme_minimal() + geom_smooth()
 
-# log creation
-# dealdf$glog <- log(dealdf$GeoHHI)
-# dealdf$slog <- log(dealdf$StageHHI)
-# dealdf$piglog <- log(dealdf$PIGHHI)
-# dealdf$piclog <- log(dealdf$PICHHI)
-# dealdf$pislog <- log(dealdf$PISHHI)
-# dealdf$lIRR <- log(dealdf$Gross_IRR)
-# dealdf$lavg <- log(dealdf$Fund_AvgHHI)
-# dealdf$log <- log(dealdf$SDFund_PICHHI)
- 
-is.na(dealdf) <- sapply(dealdf, is.infinite)
-dealdf <- na.omit(dealdf)
-
-
 # independent variables
 # a <- ggplot() + geom_histogram(data=dealdf, aes(GeoHHI)) + theme_minimal()
 # b <- ggplot() + geom_histogram(data=dealdf, aes(StageHHI)) + theme_minimal()
 # c <- ggplot() + geom_histogram(data=dealdf, aes(PIGHHI)) + theme_minimal()
 # d <- ggplot() + geom_histogram(data=dealdf, aes(PICHHI)) + theme_minimal()
 # e <- ggplot() + geom_histogram(data=dealdf, aes(PISHHI)) + theme_minimal()
+# plot_grid(a,b,c,d,e)
+#
+# a <- ggplot() + geom_histogram(data=dealdf, aes(LGeoHHI)) + theme_minimal()
+# b <- ggplot() + geom_histogram(data=dealdf, aes(LStageHHI)) + theme_minimal()
+# c <- ggplot() + geom_histogram(data=dealdf, aes(LPIGHHI)) + theme_minimal()
+# d <- ggplot() + geom_histogram(data=dealdf, aes(LPICHHI)) + theme_minimal()
+# e <- ggplot() + geom_histogram(data=dealdf, aes(LPISHHI)) + theme_minimal()
 # plot_grid(a,b,c,d,e)
 # 
 # a <- ggplot() + geom_histogram(data=dealdf, aes(SD_GeoHHI)) + theme_minimal()
@@ -111,6 +117,15 @@ dealdf <- na.omit(dealdf)
 # ggplot(dealdf, aes(SD_Fund_PICHHI, Fund_SD)) + geom_point() + geom_smooth() + theme_minimal()
 # ggplot(dealdf, aes(SD_Fund_PISHHI, Fund_SD)) + geom_point() + geom_smooth() + theme_minimal()
 
+# correlation matrices
+ind <- c(dealdf$GeoHHI, dealdf$StageHHI, dealdf$PIGHHI, dealdf$PISHHI, dealdf$PICHHI)
+ma <- matrix(ind, ncol = 5, nrow = nrow(dealdf))
+cor(dealdf$Gross_IRR, ma)
+
+ind <- c(subfunddf$Fund_GeoHHI, subfunddf$Fund_StageHHI, subfunddf$Fund_PIGHHI, subfunddf$Fund_PISHHI, subfunddf$Fund_PICHHI)
+ma <- matrix(ind, ncol = 5, nrow = nrow(subfunddf))
+cor(subfunddf$Fund_SD, ma)
+
 
 # add variables to control vector
 controlVector <- c("Number_Investments", controlVector)
@@ -132,92 +147,67 @@ controlVector <- c("Number_Investments", controlVector)
 # summary(model1)
 
 # check all data for IRR
-toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
+toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
 dependent <- "Gross_IRR"
-f1 <- formula(paste("Gross_IRR ~ poly(Fund_PICHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+f1 <- formula(paste("Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
 model1 <- lm(f1,data = dealdf)
-plotModel(model1,dealdf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model1")
+# plotModel(model1,dealdf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model1")
+effect_plot(model1, pred = Fund_StageHHI, data = dealdf)
+for (variable in independent) {
+  print(variable)
+  print(effect_plot(model1, pred = 'Fund_StageHHI', data = dealdf))
+}
+
 
 # check late stage for IRR
 latedf<- dealdf[dealdf$Company_Stage == "Late Stage",]
-toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
+toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
 dependent <- "Gross_IRR"
-f2 <- formula(paste("Gross_IRR ~ poly(Fund_PISHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+f2 <- formula(paste("Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
 model2 <- lm(f2,data = latedf)
-plotModel(model2,latedf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model2 - LS")
+# plotModel(model2,latedf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model2 - LS")
 
 # check early stage for IRR
 earlydf<- dealdf[dealdf$Company_Stage == "Early Stage",]
-toPredict <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
+toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_GeoHHI, 2)")
+independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
 dependent <- "Gross_IRR"
-f3 <- formula(paste("Gross_IRR ~ poly(Fund_PISHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
+f3 <- formula(paste("Gross_IRR ~ poly(Fund_PIGHHI,2)+poly(Fund_GeoHHI,2) + ", paste(controlVector, collapse=" + ")))
 model3 <- lm(f3,data = earlydf)
-plotModel(model3,earlydf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model3 - ES")
+# plotModel(model3,earlydf,dependent,independent,controlVector,toPredict,c(0,1),"HHI",dependent,"Model3 - ES")
 
-
-toPredict2 <- c("poly(Fund_PICHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
-independent2 <- c("Fund_PICHHI","Fund_StageHHI","Fund_GeoHHI")
-dependent2 <- "Fund_SD"
-f4 <- formula("Fund_SD ~ poly(Fund_PIGHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_GeoHHI,2)")
-model4 <- lm(f4,data = funddf)
-plotModel(model4,funddf,dependent2,independent2,controlVector,toPredict2,c(0,1),"HHI",dependent2,"Model4")
-
-output <- huxreg("Gross_IRR" = model1, "Gross_IRR - LS" = model2,  "Gross_IRR - ES" = model3, "Fund_SD" = model4)
+output <- huxreg("Gross_IRR" = model1, "Gross_IRR - LS" = model2,  "Gross_IRR - ES" = model3)
 print(output)
 
-
-# for (hhi in independent) {
-#   
-#   # convert variable vector into string
-#   cvvector <- paste(dummyVector, collapse =" + ")
-#   allIndependentPrint <- c(gsub('_','',hhi), gsub('_','',paste0("",hhi," - squared")), dummyVector)
-#   allVariables <- c(dependent, hhi, dummyVector)
-#   
-#   # create subdf with alternative variable names
-#   subdf <- dealdf[allVariables]
-#   colnames(subdf) <- c("y", "x", dummyVector)
-#   
-#   # linear model
-#   linear.model <- lm(y ~ ., data = subdf)
-#   # linear.model <- lm(y ~ x + dummyVector, data = subdf)
+# # check SD
+# toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+# independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+# dependent <- "Fund_SD"
+# f4 <- formula("Fund_SD ~ poly(Fund_PIGHHI, 2)+poly(Fund_StageHHI, 2)+poly(Fund_GeoHHI, 2)")
+# model4 <- lm(f4,data = funddf)
+# #plotModel(model4,funddf,dependent2,independent2,controlVector,toPredict2,c(0,0.5),"HHI",dependent2,"Model4")
 # 
-#   # quadratic model
-#   quadratic.model <- lm(y ~ poly(x, 2) + ., data = subdf) 
-#   # quadratic.model <- lm(y ~ poly(x, 2), data = subdf) 
-#   
-#   #newRange <- expand.grid(subdf)
-#   newRange <- data.frame(x=seq(0,1,length.out=nrow(subdf)), x2=seq(0,1,length.out=nrow(subdf)))
-#   newdata <- data.frame(x=seq(0, 1, .01))
-#   #newdata$pred1 <- predict(quadratic.model, newdata)
-#   
-#   
-#   predQ <- predict(quadratic.model)#, newdata = subdf)
-#   
-#   plot <- ggplot() +
-#     theme_minimal() +
-#     geom_point(aes(x=subdf$x, y=subdf$y)) +
-#     xlim(0, 1) +
-#     geom_line(aes(x=newRange$x, y=predict(linear.model)), colour = "blue") +
-#     geom_line(aes(x=newdata$x, y=newdata$pred1), colour = "red") +
-#     ggtitle("Regression") + 
-#     xlab(hhi) +
-#     ylab(dependent)
-#   print(plot)
-#   
-#   name <- paste0("",dependent, " - ",hhi,".html")
-#   titel <- paste0(dependent, " - ",hhi)
-#   titel <- gsub('_','',titel)
-#   depvar <- gsub('_','',dependent)
-#   indvar <- gsub('_','',hhi)
-#   indvar2 <- gsub('_','',paste0("",hhi," - squared"))
-#   print(titel)
-#   capture.output(stargazer(linear.model,quadratic.model, title=titel, align=TRUE, type="html", digits=1, out=name,
-#                            dep.var.labels=c(depvar),
-#                            covariate.labels=c(indvar,indvar2,dummyVector,"Constant")))
-# }
+# # check late stage for SD
+# latedf<- dealdf[dealdf$Company_Stage == "Late Stage",]
+# toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+# independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+# dependent <- "Fund_SD"
+# f5 <- formula("Fund_SD ~ poly(Fund_PIGHHI, 2)+poly(Fund_StageHHI, 2)+poly(Fund_GeoHHI, 2)")
+# model5 <- lm(f4,data = funddf)
+# 
+# # check early stage for SD
+# earlydf<- dealdf[dealdf$Company_Stage == "Early Stage",]
+# toPredict <- c("poly(Fund_PIGHHI, 2)","poly(Fund_StageHHI, 2)","poly(Fund_GeoHHI, 2)")
+# independent <- c("Fund_PIGHHI","Fund_StageHHI","Fund_GeoHHI")
+# dependent <- "Fund_SD"
+# f6 <- formula("Fund_SD ~ poly(Fund_PIGHHI, 2)+poly(Fund_StageHHI, 2)+poly(Fund_GeoHHI, 2)")
+# model6 <- lm(f4,data = funddf)
+
+output <- huxreg("Gross_IRR" = model1, "Gross_IRR - LS" = model2,  "Gross_IRR - ES" = model3, "Fund_SD" = model4, "Fund_SD - LS" = model5, "Fund_SD - ES" = model6)
+print(output)
+
 
 
 
