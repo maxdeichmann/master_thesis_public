@@ -33,6 +33,7 @@ dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- median(dealdf$Gross_IRR, na.rm=TRUE
 # replace Deal size NA with median
 dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE)
 
+
 # stage data adoption
 # "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine","Convertible Debt","Debt - General","Spin-Off","Joint Venture","Secondary Transaction - Private","Platform Creation"
 # PIPE: https://www.investopedia.com/terms/p/pipe.asp
@@ -74,12 +75,21 @@ dealdf<- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
 dealdf<- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
 
+# total return
+dealdf$Total_Return <- dealdf$Gross_IRR * dealdf$Deal_Size
+
+# year
+dealdf$Deal_Year <- year(dealdf$Deal_Date)
+
 # add log variables
-dealdf$LGeoHHI = log(max(dealdf$GeoHHI) - dealdf$GeoHHI)
-dealdf$LStageHHI = log(max(dealdf$StageHHI) - dealdf$StageHHI)
-dealdf$LPIGHHI = log(max(dealdf$PIGHHI) - dealdf$PIGHHI)
-dealdf$LPICHHI = log(max(dealdf$PICHHI) - dealdf$PICHHI)
-dealdf$LPISHHI = log(max(dealdf$PISHHI) - dealdf$PISHHI)
+dealdf$LGeoHHI = sqrt(max(dealdf$GeoHHI) - dealdf$GeoHHI)
+dealdf$LStageHHI = sqrt(max(dealdf$StageHHI) - dealdf$StageHHI)
+dealdf$LPIGHHI = sqrt(max(dealdf$PIGHHI) - dealdf$PIGHHI)
+dealdf$LPICHHI = sqrt(max(dealdf$PICHHI) - dealdf$PICHHI)
+dealdf$LPISHHI = sqrt(max(dealdf$PISHHI) - dealdf$PISHHI)
+dealdf$LDeal_Size <- log(dealdf$Deal_Size)
+dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
+dealdf$LTotal_Return <- log(dealdf$Total_Return)
 
 # add sd differences from mean
 #dealdf <- sdDistance(c(hhis,"Gross_IRR"),dealdf)
@@ -88,15 +98,13 @@ dealdf$LPISHHI = log(max(dealdf$PISHHI) - dealdf$PISHHI)
 #dealdf$AvgHHI <- apply(dealdf[,12:16], 1, mean)
 #dealdf$AvgHHI <- rowMeans(dealdf[c('GeoHHI', 'StageHHI', 'PIGHHI')])
 
-# total return
-dealdf$Total_Return <- dealdf$Gross_IRR * dealdf$Deal_Size
 
 # create fund level data
 funddf <- fundData(dealdf)
 #funddf <- sdDistance(c(fundhhis,"Fund_SD"),funddf)
 
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c("Fund_ID", "Fund_SD", "Number_Investments", "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")
+dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Operating_Years", "LOperating_Years", "Fund_SD", "Number_Investments", "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")
 
 # year dummy creation
 new <- as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4)))
@@ -108,7 +116,7 @@ dealdf<- cbind(dealdf, new)
 # america dummy
 dummy <- as.numeric(dealdf$Company_Country == "United States")
 dealdf$UnitedStates = dummy
-controlVector <- c(controlVector,"UnitedStates")
+
 
 # create grouped hhi based on crossproduct
 # groupdf <- hhiBuckets(10,funddf,c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI"))
@@ -117,7 +125,9 @@ groupdf <- hhiBuckets(10,dealdf,c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"
 # time series
 # timedf <- hhiTimeSeries(df, c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"))
 
-
+# filter for at least 6 years of firm experience
+dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
+funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
 
 #save data
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
@@ -127,4 +137,3 @@ save(funddf,file="dataPreperation_fund.Rda")
 save(groupdf,file="dataPreperation_group.Rda")
 setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
 excel_export(list(dealdf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
-

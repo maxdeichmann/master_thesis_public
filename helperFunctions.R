@@ -9,11 +9,11 @@ library(cowplot)
 library(diverse)
 library(ggplot2)
 library(gridExtra)
+library(data.table)
 
 # calculate and append hhi for deals
 hhi <- function(df, variable, HHIName) {
-  environment(hhi)
-  
+
   #check variables
   if (missing(df))
     stop("Need to specify df.")
@@ -101,8 +101,11 @@ fundData <- function(dealdf) {
   # create columns
   col.names = c(
     "Fund_ID",
+    "Operating_Years",
+    "LOperating_Years",
     "Fund_IRR",
     "Fund_SD",
+    "LFund_SD",
     "Number_Investments",
     "LNumber_Investments",
     "Total_Investments",
@@ -141,6 +144,9 @@ fundData <- function(dealdf) {
     "double",
     "double",
     "double",
+    "double",
+    "double",
+    "double",
     "double"
   )
   
@@ -159,19 +165,27 @@ fundData <- function(dealdf) {
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)),]
+    
     # weighted average of irr to get fund irr removing na
     wa <- weighted.mean(out$Gross_IRR, out$Deal_Size, na.rm = TRUE)
     sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
+    a <- year(out$Deal_Date[1])
+    b <- year(out$Deal_Date[nrow(out)])
+    operating <- b - a
+
     # create row
     funddf[nrow(funddf) + 1,] = list(
       out$Investor_fund_ID[nrow(out)],
+      operating,
+      log(operating),
       wa,
       sd,
+      log(sd),
       nrow(out),
       log(nrow(out)),
       sum(out$Deal_Size),
-      log(wa * sum(out$Deal_Size)),
+      log(sum(out$Deal_Size)),
       wa * sum(out$Deal_Size),
       out$GeoHHI[nrow(out)],
       out$StageHHI[nrow(out)],
