@@ -16,6 +16,7 @@ library(readxl)
 library(xlsx)
 library(ggplot2)
 library(ImportExport)
+library(MASS)
 
 # import sources
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
@@ -24,7 +25,12 @@ source("helperFunctions.R")
 # Set working directory to access source file
 setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
 
-dealdf <- read_excel("Original_Adapted.xlsx", col_types = c("numeric", "numeric", "numeric", "text", "text", "text", "text", "text", "date", "numeric", "text"))
+dealdf <- read_excel("Original_Adapted.xlsx", col_types = c("numeric", "numeric", "numeric", "text", "text", "text", 
+                                                            "text", "text", "date", "numeric", "text"))
+colnames(dealdf)[2] <- "Fund_ID"
+colnames(dealdf)[6] <- "PIS"
+colnames(dealdf)[4] <- "PIG"
+colnames(dealdf)[5] <- "PIC"
 
 # handle missing data
 # replace IRR NA with median
@@ -35,7 +41,8 @@ dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- median(dealdf$Deal_Size, na.rm=TRUE
 
 
 # stage data adoption
-# "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine","Convertible Debt","Debt - General","Spin-Off","Joint Venture","Secondary Transaction - Private","Platform Creation"
+# "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine",
+# "Convertible Debt","Debt - General","Spin-Off","Joint Venture","Secondary Transaction - Private","Platform Creation"
 # PIPE: https://www.investopedia.com/terms/p/pipe.asp
 # Platform creation: https://en.wikipedia.org/wiki/Platform_company
 # convertible bond: https://www.investopedia.com/terms/c/convertiblebond.asp
@@ -58,37 +65,48 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage VC" ] <- "Late Stage"
 dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 
 # quantile filtering
-# dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.1,0.9)) & dealdf$Deal_Size < quantile(dealdf$Deal_Size, probs = c(0.1, 0.9)),]
-# dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.05, 0.95)),]
+#dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.01,0.99)) & 
+# dealdf$Deal_Size < quantile(dealdf$Deal_Size, probs = c(0.1, 0.9)),]
+#dealdf<- dealdf[dealdf$Gross_IRR < quantile(dealdf$Gross_IRR, probs = c(0.01, 0.99)),]
 # dealdf<- dealdf[dealdf$Deal_Size < quantile(dealdf$Deal_Size, probs = c(0.05, 0.95)),]
 
 # create dummy vector
 controlVector <- c()
 
-#add HHI on deal level
+# add HHI on deal level
 hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
-fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI","LFund_GeoHHI","LFund_StageHHI","LFund_PIGHHI","LFund_PICHHI","LFund_PISHHI", "LFund_AvgHHI")
-# sdfundhhis <- c("SD_Fund_GeoHHI","SD_Fund_StageHHI","SD_Fund_PIGHHI","SD_Fund_PICHHI","SD_Fund_PISHHI", "SD_Fund_Avg_GeoHHI","SD_Fund_Avg_StageHHI","SD_Fund_Avg_PIGHHI","SD_Fund_Avg_PICHHI","SD_Fund_Avg_PISHHI","SD_Fund_AvgHHI")
+fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI","LFund_GeoHHI",
+              "LFund_StageHHI","LFund_PIGHHI","LFund_PICHHI","LFund_PISHHI", "LFund_AvgHHI")
+# sdfundhhis <- c("SD_Fund_GeoHHI","SD_Fund_StageHHI","SD_Fund_PIGHHI","SD_Fund_PICHHI","SD_Fund_PISHHI", 
+#"SD_Fund_Avg_GeoHHI","SD_Fund_Avg_StageHHI","SD_Fund_Avg_PIGHHI","SD_Fund_Avg_PICHHI","SD_Fund_Avg_PISHHI",
+#"SD_Fund_AvgHHI")
 dealdf<- hhi(dealdf,"Company_Country", "GeoHHI")
 dealdf<- hhi(dealdf,"Company_Stage", "StageHHI")
-dealdf<- hhi(dealdf,"Primary_Industry_Group", "PIGHHI")
-dealdf<- hhi(dealdf,"Primary_Industry_Code", "PICHHI")
-dealdf<- hhi(dealdf,"Primary_Industry_Sector", "PISHHI")
+dealdf<- hhi(dealdf,"PIG", "PIGHHI")
+dealdf<- hhi(dealdf,"PIC", "PICHHI")
+dealdf<- hhi(dealdf,"PIS", "PISHHI")
 
 # total return
 dealdf$Total_Return <- dealdf$Gross_IRR * dealdf$Deal_Size
 
+# success
+dealdf$Success[dealdf$Gross_IRR > 0 ] <- 1
+dealdf$Success[dealdf$Gross_IRR <= 0 ] <- 0
+
 # year
 dealdf$Deal_Year <- year(dealdf$Deal_Date)
 
-# add log variables
+# data transformation
+# independent
 dealdf$LGeoHHI = sqrt(max(dealdf$GeoHHI) - dealdf$GeoHHI)
 dealdf$LStageHHI = sqrt(max(dealdf$StageHHI) - dealdf$StageHHI)
 dealdf$LPIGHHI = sqrt(max(dealdf$PIGHHI) - dealdf$PIGHHI)
 dealdf$LPICHHI = sqrt(max(dealdf$PICHHI) - dealdf$PICHHI)
 dealdf$LPISHHI = sqrt(max(dealdf$PISHHI) - dealdf$PISHHI)
+
+# dependent
 dealdf$LDeal_Size <- log(dealdf$Deal_Size)
-dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
+dealdf$LGross_IRR <- log(dealdf$Gross_IRR)#-1/sqrt(1+dealdf$Gross_IRR)
 dealdf$LTotal_Return <- log(dealdf$Total_Return)
 
 # add sd differences from mean
@@ -103,20 +121,35 @@ dealdf$LTotal_Return <- log(dealdf$Total_Return)
 funddf <- fundData(dealdf)
 #funddf <- sdDistance(c(fundhhis,"Fund_SD"),funddf)
 
+
+# vector <- funddf$Fund_StageHHI + 10
+# maxv <- max(vector) - vector
+# a <- log(vector)
+# b <- 1/vector
+# c <- vector^2
+# d <- sqrt(vector)
+# e <- log(maxv)
+# f <- 1/maxv
+# g <- maxv^2
+# h <- sqrt(maxv)
+# 
+# or <- ggplot() + geom_histogram(data=funddf, aes(vector)) + theme_minimal()
+# ap <- ggplot() + geom_histogram(data=funddf, aes(a)) + theme_minimal()
+# bp <- ggplot() + geom_histogram(data=funddf, aes(b)) + theme_minimal()
+# cp <- ggplot() + geom_histogram(data=funddf, aes(c)) + theme_minimal()
+# dp <- ggplot() + geom_histogram(data=funddf, aes(d)) + theme_minimal()
+# ep <- ggplot() + geom_histogram(data=funddf, aes(e)) + theme_minimal()
+# fp <- ggplot() + geom_histogram(data=funddf, aes(f)) + theme_minimal()
+# gp <- ggplot() + geom_histogram(data=funddf, aes(g)) + theme_minimal()
+# hp <- ggplot() + geom_histogram(data=funddf, aes(h)) + theme_minimal()
+# output <- plot_grid(or,ap,bp,cp,dp,ep,fp,gp,hp)
+
+
+
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Operating_Years", "LOperating_Years", "Fund_SD", "Number_Investments", "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis)], by.x = "Investor_fund_ID", by.y = "Fund_ID")
-
-# year dummy creation
-new <- as.data.frame.matrix(table(sequence(nrow(dealdf)), substring(dealdf$Deal_Date,1,4)))
-newNames <- paste("Y", colnames(new), sep="")
-colnames(new) <- newNames
-controlVector = c(controlVector,newNames)
-dealdf<- cbind(dealdf, new)
-
-# america dummy
-dummy <- as.numeric(dealdf$Company_Country == "United States")
-dealdf$UnitedStates = dummy
-
+dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Operating_Years", "LOperating_Years", "Fund_SD", "Number_Investments", 
+                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis,"Mean_PIS","Mean_PIG","Mean_PIC")], 
+                by.x = "Fund_ID", by.y = "Fund_ID")
 
 # create grouped hhi based on crossproduct
 # groupdf <- hhiBuckets(10,funddf,c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI"))

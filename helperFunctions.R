@@ -10,6 +10,8 @@ library(diverse)
 library(ggplot2)
 library(gridExtra)
 library(data.table)
+library(SDMTools)
+library(Hmisc)
 
 # calculate and append hhi for deals
 hhi <- function(df, variable, HHIName) {
@@ -29,13 +31,13 @@ hhi <- function(df, variable, HHIName) {
     stop("HHIName must be a string")
   
   # get number of funds
-  funds <- unique(df$Investor_fund_ID)
+  funds <- unique(df$Fund_ID)
   nrOfFunds = length(funds)
   
   #loop through funds
   for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
     # create fund subset
-    subdf <- subset(df, Investor_fund_ID == funds[a])
+    subdf <- subset(df, Fund_ID == funds[a])
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)),]
@@ -122,12 +124,18 @@ fundData <- function(dealdf) {
     "LFund_PIGHHI",
     "LFund_PICHHI",
     "LFund_PISHHI",
-    "LFund_AvgHHI"
+    "LFund_AvgHHI",
+    "Mean_PIC",
+    "Mean_PIS",
+    "Mean_PIG"
     
   )
   colClasses = c(
     "integer",
     "integer",
+    "double",
+    "double",
+    "double",
     "double",
     "double",
     "double",
@@ -155,28 +163,31 @@ fundData <- function(dealdf) {
                        col.names = col.names)
   
   # get number of funds
-  funds <- unique(dealdf$Investor_fund_ID)
+  funds <- unique(dealdf$Fund_ID)
   nrOfFunds = length(funds)
   
   #loop through funds
   for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
     # create fund subset
-    subdf <- subset(dealdf, Investor_fund_ID == funds[a])
+    subdf <- subset(dealdf, Fund_ID == funds[a])
     
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)),]
     
     # weighted average of irr to get fund irr removing na
-    wa <- weighted.mean(out$Gross_IRR, out$Deal_Size, na.rm = TRUE)
-    sd <- sd(out$Gross_IRR, na.rm = TRUE)
+    wt <- out$Deal_Size/sum(out$Deal_Size)
+    wa <- wt.mean(out$Gross_IRR, wt)
+    sd <- wt.sd(out$Gross_IRR,wt)
+    # sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
+    # operating years
     a <- year(out$Deal_Date[1])
     b <- year(out$Deal_Date[nrow(out)])
     operating <- b - a
 
     # create row
     funddf[nrow(funddf) + 1,] = list(
-      out$Investor_fund_ID[nrow(out)],
+      out$Fund_ID[nrow(out)],
       operating,
       log(operating),
       wa,
@@ -192,21 +203,24 @@ fundData <- function(dealdf) {
       out$PIGHHI[nrow(out)],
       out$PICHHI[nrow(out)],
       out$PISHHI[nrow(out)],
-      mean(c(out$GeoHHI[nrow(out)],
-            out$StageHHI[nrow(out)],
-            out$PIGHHI[nrow(out)],
-            out$PICHHI[nrow(out)],
-            out$PISHHI[nrow(out)])),
+      mean(c(out$PIGHHI[nrow(out)],
+             out$PICHHI[nrow(out)],
+             out$PISHHI[nrow(out)],
+             out$GeoHHI[nrow(out)],
+             out$StageHHI[nrow(out)])),
       out$LGeoHHI[nrow(out)],
       out$LStageHHI[nrow(out)],
       out$LPIGHHI[nrow(out)],
       out$LPICHHI[nrow(out)],
       out$LPISHHI[nrow(out)],
-      mean(c(out$LGeoHHI[nrow(out)],
-            out$LStageHHI[nrow(out)],
-            out$LPIGHHI[nrow(out)],
+      mean(c(out$LPIGHHI[nrow(out)],
             out$LPICHHI[nrow(out)],
-            out$LPISHHI[nrow(out)]))
+            out$LPISHHI[nrow(out)],
+            out$LGeoHHI[nrow(out)],
+            out$LStageHHI[nrow(out)])),
+      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIC)))),0),
+      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIS)))),0),
+      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIG)))),0)
     )
   }
   return(funddf)
@@ -325,18 +339,37 @@ plotModel <- function(model,
     scale_colour_discrete(legendTitle)
 
   for (i in 1:length(independent)) {
-    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], y = df[[dependent]], colour = independent[",i,"]))")
+    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], 
+                       y = df[[dependent]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
 
   for (i in 1:length(independent)) {
-    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
+    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], 
+                        y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
   print(plot)
   return(plot)
 }
 
+# from: http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
+# mat : is a matrix of data
+# ... : further arguments to pass to the native R cor.test function
+cor.mtest <- function(mat, ...) {
+  mat <- as.matrix(mat)
+  n <- ncol(mat)
+  p.mat<- matrix(NA, n, n)
+  diag(p.mat) <- 0
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      tmp <- cor.test(mat[, i], mat[, j], ...)
+      p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+    }
+  }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
 # remove_outliers <- function(x, na.rm = TRUE, ...) {
