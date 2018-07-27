@@ -219,8 +219,8 @@ fundData <- function(dealdf) {
             out$LGeoHHI[nrow(out)],
             out$LStageHHI[nrow(out)])),
       round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIC)))),0),
-      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIS)))),0),
-      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIG)))),0)
+      round(mean(as.numeric(factor(out$PIS,unique(dealdf$PIS)))),0),
+      round(mean(as.numeric(factor(out$PIG,unique(dealdf$PIG)))),0)
     )
   }
   return(funddf)
@@ -349,6 +349,65 @@ plotModel <- function(model,
                         y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
     plot <- plot + eval(parse(text = loop_input))
   }
+  print(plot)
+  return(plot)
+}
+
+plotModel1 <- function(model,
+                      df,
+                      dependent,
+                      independent,
+                      xRange,
+                      xAxis,
+                      yAxis,
+                      title) {
+  if(missing(xAxis)) {
+    xAxis <- "x"
+  }
+  if(missing(yAxis)) {
+    yAxis <- "y"
+  }
+  if(missing(title)) {
+    title <- "Title"
+  }
+  if(missing(xRange)) {
+    xRange <- c(0,1)
+  }
+  print(independent)
+  
+  coe <- coef(model)
+  a <- coe[["poly(LFund_GeoHHI, 2)2"]]
+  print(a)
+  print(coe)
+  print("Hallo")
+  
+  plot <- ggplot() +
+    ggtitle(title) +
+    xlab(xAxis) +
+    ylab(yAxis) +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    xlim(xRange[1], xRange[2])
+    # scale_colour_discrete()
+
+  for (i in 1:length(independent)) {
+    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]],
+                       y = df[[dependent]], colour = independent[",i,"]))")
+    plot <- plot + eval(parse(text = loop_input))
+  }
+  fun.1 <- function(x) coe[["poly(LFund_GeoHHI, 2)2"]]*x^2 + coe[["poly(LFund_GeoHHI, 2)1"]]*x
+  print(fun.1)
+  fun.2 <- function(x) -1 * x + 10
+  fun.3 <- function(x) 3 * x + 2
+  # plot + stat_function(fun = fun.1)
+  # plot + stat_function(fun = fun.2)
+  plot + stat_function(fun = sin, colour = "red")
+
+  # for (i in 1:length(independent)) {
+  #   loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]],
+  #                       y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
+  #   plot <- plot + eval(parse(text = loop_input))
+  # }
   print(plot)
   return(plot)
 }
