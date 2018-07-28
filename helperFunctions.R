@@ -106,13 +106,13 @@ fundData <- function(dealdf) {
     "Operating_Years",
     "LOperating_Years",
     "Fund_IRR",
+    "Fund_Deal_Size",
     "Fund_SD",
     "LFund_SD",
     "Number_Investments",
     "LNumber_Investments",
     "Total_Investments",
     "LTotal_Investments",
-    "Fund_Return",
     "Fund_GeoHHI",
     "Fund_StageHHI",
     "Fund_PIGHHI",
@@ -127,7 +127,8 @@ fundData <- function(dealdf) {
     "LFund_AvgHHI",
     "Mean_PIC",
     "Mean_PIS",
-    "Mean_PIG"
+    "Mean_PIG",
+    "Popular_Country"
     
   )
   colClasses = c(
@@ -155,7 +156,8 @@ fundData <- function(dealdf) {
     "double",
     "double",
     "double",
-    "double"
+    "double",
+    "character"
   )
   
   funddf <- read.table(text = "",
@@ -174,30 +176,43 @@ fundData <- function(dealdf) {
     # sort by date
     out <- subdf[order(as.Date(subdf$Deal_Date)),]
     
+    subdf <- na.omit(out)
+    
     # weighted average of irr to get fund irr removing na
-    wt <- out$Deal_Size/sum(out$Deal_Size)
-    wa <- wt.mean(out$Gross_IRR, wt)
-    sd <- wt.sd(out$Gross_IRR,wt)
+    weights <- subdf$Deal_Size/sum(subdf$Deal_Size)
+    weightedAverage <- wt.mean(subdf$Gross_IRR, weights)
+    sd <- wt.sd(subdf$Gross_IRR,weights)
     # sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
     # operating years
     a <- year(out$Deal_Date[1])
     b <- year(out$Deal_Date[nrow(out)])
     operating <- b - a
+    
+    # most common country
+    factor <- factor(subdf$Company_Country,unique(dealdf$Company_Country))
+    countries <- as.numeric(factor)
+    index <- as.numeric(names(which.max(table(countries))))
 
+    if(nrow(out) == 1) {
+      country <<- out$Company_Country[nrow(out)]
+    } else {
+      country <<- unique(dealdf$Company_Country)[index]
+    }
+    
     # create row
     funddf[nrow(funddf) + 1,] = list(
       out$Fund_ID[nrow(out)],
       operating,
       log(operating),
-      wa,
+      weightedAverage,
+      mean(subdf$Deal_Size),
       sd,
       log(sd),
       nrow(out),
       log(nrow(out)),
-      sum(out$Deal_Size),
-      log(sum(out$Deal_Size)),
-      wa * sum(out$Deal_Size),
+      sum(subdf$Deal_Size),
+      log(sum(subdf$Deal_Size)),
       out$GeoHHI[nrow(out)],
       out$StageHHI[nrow(out)],
       out$PIGHHI[nrow(out)],
@@ -220,7 +235,8 @@ fundData <- function(dealdf) {
             out$LStageHHI[nrow(out)])),
       round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIC)))),0),
       round(mean(as.numeric(factor(out$PIS,unique(dealdf$PIS)))),0),
-      round(mean(as.numeric(factor(out$PIG,unique(dealdf$PIG)))),0)
+      round(mean(as.numeric(factor(out$PIG,unique(dealdf$PIG)))),0),
+      country
     )
   }
   return(funddf)
