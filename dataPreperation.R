@@ -89,8 +89,8 @@ dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
 funddf <- fundData(dealdf)
 
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", "Fund_SD", "Number_Investments", 
-                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis,"Mean_PIS","Mean_PIG","Mean_PIC","Popular_Country")], 
+dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", "Fund_SD","LFund_SD", "Number_Investments", 
+                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis,"Popular_Country")], 
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience

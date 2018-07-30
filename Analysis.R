@@ -55,7 +55,7 @@ dealdf <- na.omit(dealdf)
 # is.na(funddf) <- sapply(funddf, is.infinite)
 # subfunddf <- na.omit(funddf)
 
-fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PICHHI","Fund_PIGHHI")
+fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_PICHHI")
 
 #--plotting deal level------------------------------------------------------------------------------------------------------
 # stage distribution
@@ -117,16 +117,17 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PICHHI","Fund_P
 # shapiro.test(dealdf$Fund_PIGHHI)
 # shapiro.test(dealdf$Gross_IRR)
 
-# hhis <- c("LFund_GeoHHI","LFund_StageHHI","LFund_PICHHI","LFund_PISHHI","LFund_PIGHHI")
+#hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PICHHI","Fund_PISHHI","Fund_PIGHHI")
+# hhis <- c("GeoHHI","StageHHI","PICHHI","PISHHI","PIGHHI")
 # outcome <- list()
-# dependent <- "LGross_IRR"
+# dependent <- "LFund_SD"
 # for (hhi in hhis) {
 #   temp <- ggplot(data = dealdf,aes(dealdf[[hhi]],dealdf[[dependent]])) + theme_minimal() +
 #     geom_point() + geom_smooth(method = "lm",formula=y ~ poly(x, 2, raw=TRUE)) +
 #     xlab(hhi) + ylab(dependent)
 #   outcome[[hhi]] <- temp
 # }
-# wrap_plots(outcome)
+# print(wrap_plots(outcome))
 
 
 
@@ -204,187 +205,62 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PICHHI","Fund_P
 #RETURN ANALYSIS--------------------------------------------------------------------------------------------------------
 
 
-# run polynomial analysis
-ols1 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),data = dealdf)
-output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output1)
-wb1 <- as_Workbook(output1)
-saveWorkbook(wb1,"IRR_ols1.xlsx")
-plot(ols1)
-
-ols2 <- lm((LGross_IRR)~poly(GeoHHI,2)as.factor(Deal_Year),data = dealdf)
-summary(ols2)
-shapiro.test(ols2$residuals)
-hist(ols2$residuals)
-plot(ols2)
-
-
-
-
-
-
-glm1 <- glm((Gross_IRR+10)~poly(GeoHHI,2)+poly(StageHHI,2)+poly(PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = dealdf,family = binomial)
-qr <- rq(Gross_IRR~StageHHI,data = dealdf, tau = 0.5)
-
-# identify+kill outliers
-outlier <- outlierTest(ols2)
-outliers <- as.numeric(names(outlier[["rstudent"]]))
-subdf2 <-subset(dealdf,!(rownames(dealdf) %in% outliers))
-subdf1 <- subset(dealdf,!(rownames(dealdf) %in% c(395)))
-
-# run polynomial analysis again
-ols2 <- lm(((LGross_IRR+10)^2)~poly(LGeoHHI,2)+poly(LStageHHI,2)+poly(LPIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = dealdf)
-output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output2)
-wb2 <- as_Workbook(output2)
-saveWorkbook(wb2,"IRR_ols2.xlsx")
-outlierTest(ols2)
-plot(ols2)
-
-# take out extreme value
-
-
-# run polynomial analysis again
-ols4 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+LTotal_Investments+as.factor(Deal_Year),data = homodf)
-output4 <- huxreg(ols4, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output4)
-wb3 <- as_Workbook(output4)
-saveWorkbook(wb4,"IRR_ols4.xlsx")
-outlierTest(ols4)
-plot(ols4)
-
-
-#plot(ols3)
-
-# reducing even more outliers
-# identify outliers
-outlier <- outlierTest(ols3)
-outliers <- as.numeric(names(outlier[["rstudent"]]))
-
-# transform to normally distribute residuals
-ols4 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PISHHI,2)+LNumber_Investments+LTotal_Investments+as.factor(Deal_Year),data = subdf)
-output4 <- huxreg(ols4, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output4)
-wb4 <- as_Workbook(output4)
-saveWorkbook(wb4,"ols4.xlsx")
-outlierTest(ols4)
-shapiro.test(ols4$residuals)
-#plot(ols4)
+# # run polynomial analysis
+# #ols1 <- lm(LGross_IRR~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+as.factor(Deal_Year),data = dealdf)
+# 
+# #g <- glm(formula = (Gross_IRR+1)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year), family = "poisson", data = dealdf)
+# ols1 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),data = dealdf)
+# output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+# print(output1)
+# wb1 <- as_Workbook(output1)
+# saveWorkbook(wb1,"IRR_ols1.xlsx", overwrite = TRUE)
+# histo(ols1$residuals, "residuals")
+# # plot(ols1)
+# 
+# # check normality
+# shapiro.test(ols1$residuals)
+# 
+# # check heteroskedasticity
+# ncvTest(ols1)
+# 
+# # check correlation
+# va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI, dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years, dealdf$Deal_Year, dealdf$Deal_Size)
+# na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
+# correlation(va,na)
+# 
+# 
+# # run regression with controll variabels
+# ols2 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size+as.factor(Deal_Year),data = dealdf)
+# output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+# print(output2)
+# wb2 <- as_Workbook(output2)
+# saveWorkbook(wb2,"IRR_ols2.xlsx", overwrite = TRUE)
+# histo(ols2$residuals, "residuals")
+# plot(ols2)
+# 
+# # vif
+# vif(ols2)
+# 
+# # check normality
+# shapiro.test(ols2$residuals)
+# 
+# # check heteroskedasticity
+# ncvTest(ols2)
+# 
+# 
+# # add more fixed effects
+# ols3 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size+as.factor(Deal_Year),data = dealdf)
+# fe3 <- felm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size|Deal_Year,data = dealdf)
+# output3 <- huxreg(ols3,fe3, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+# print(output3)
+# wb3 <- as_Workbook(output3)
+# saveWorkbook(wb3,"IRR_ols3.xlsx", overwrite = TRUE)
+# histo(ols3$residuals, "residuals")
+# plot(ols3)
 
 
 
 
-# test multicolinearity
-
-#1. correlation table
-variables <- cbind(subdf$LFund_GeoHHI, subdf$LFund_StageHHI, subdf$LFund_PIGHHI, subdf$LFund_PISHHI, subdf$LFund_PICHHI, subdf$LNumber_Investments, subdf$LTotal_Investments)
-colnames(variables) <- c(fund_hhis,"LNumber_Investments","LTotal_Investments")
-M <- cor(variables)
-p.mat <- cor.mtest(variables)
-col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-corrplot(M, method="color", col=col(200),
-         type="upper", order="hclust",
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black", tl.srt=45, #Text label color and rotation
-         # Combine with significance
-         p.mat = p.mat, sig.level = 0.01, insig = "blank",
-         # hide correlation coefficient on the principal diagonal
-         diag=FALSE
-)
-#2. VIF
-vif(ols4)
-
-# improved model
-# ols5 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PISHHI,2)+LNumber_Investments +as.factor(Deal_Year),data = subdf)
-# output5 <- huxreg(ols5, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-# print(output5)
-# wb5 <- as_Workbook(output5)
-# saveWorkbook(wb5,"ols5.xlsx")
-# outlierTest(ols5)
-# shapiro.test(ols5$residuals)
-# plot(ols5)
-
-
-# heteroskedastizity
-ncvTest(ols4)
-#spreadLevelPlot(ols4)
-homodf <- subset(subdf,!(rownames(subdf) %in% c(395)))
-
-ols6 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PISHHI,2)+LNumber_Investments +as.factor(Deal_Year),data = homodf)
-output6 <- huxreg(ols6, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output6)
-wb6 <- as_Workbook(output6)
-saveWorkbook(wb6,"ols6.xlsx")
-outlierTest(ols6)
-shapiro.test(ols6$residuals)
-ncvTest(ols6)
-#plot(ols6)
-
-# include more controll variables
-ols7 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PISHHI,2)+LNumber_Investments+Operating_Years+Deal_Size+as.factor(Deal_Year),data = homodf)
-output7 <- huxreg(ols7, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output7)
-wb7 <- as_Workbook(output7)
-saveWorkbook(wb7,"ols7.xlsx")
-outlierTest(ols7)
-shapiro.test(ols7$residuals)
-ncvTest(ols7)
-#plot(ols7)
-
-# correlation check
-#1. correlation table
-variables <- cbind(homodf$LFund_GeoHHI, homodf$LFund_StageHHI, homodf$LFund_PIGHHI, homodf$LFund_PISHHI, homodf$LFund_PICHHI, homodf$LNumber_Investments, homodf$LTotal_Investments, homodf$Deal_Size, homodf$Operating_Years)
-colnames(variables) <- c(fund_hhis,"LNumber_Investments","LTotal_Investments", "Deal_Size", "Operating_Years")
-M <- cor(variables)
-p.mat <- cor.mtest(variables)
-col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-corrplot(M, method="color", col=col(200),
-         type="upper", order="hclust",
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black", tl.srt=45, #Text label color and rotation
-         # Combine with significance
-         p.mat = p.mat, sig.level = 0.01, insig = "blank",
-         # hide correlation coefficient on the principal diagonal
-         diag=FALSE
-)
-#2. VIF
-vif(ols7)
-
-# remove operating years
-ols8 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PISHHI,2)+LNumber_Investments+Deal_Size+as.factor(Deal_Year),data = homodf)
-output8 <- huxreg(ols8, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output8)
-wb8 <- as_Workbook(output8)
-saveWorkbook(wb8,"ols8.xlsx")
-outlierTest(ols8)
-shapiro.test(ols8$residuals)
-ncvTest(ols8)
-# plot(ols8)
-
-# add FE
-# PIS -> 0.06049
-# PIC -> 0.06553
-# PIG -> 0.05719
-ols9 <- lm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size+as.factor(Deal_Year)+as.factor(Company_Country),data = homodf)
-summary(ols9)
-
-# put into fe model
-fe <- felm(LGross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size|Deal_Year+Company_Country, data = homodf)
-summary(fe)
-
-output9 <- huxreg(ols9,fe, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output9)
-wb9 <- as_Workbook(output9)
-saveWorkbook(wb9,"ols9.xlsx")
-outlierTest(ols9)
-shapiro.test(ols9$residuals)
-ncvTest(ols9)
-vif(ols9)
-# plot(ols9)
-
-source("helperFunctions.R")
-plotModel1(ols9,homodf,"LGross_IRR",c("LFund_GeoHHI","LFund_StageHHI","LFund_PIGHHI"),c(0,1),"HHI","Model1")
-effect_plot(ols9, pred = LFund_GeoHHI,data = homodf)
 
 # END OF RETURN ANALYSIS
 
@@ -396,6 +272,34 @@ effect_plot(ols9, pred = LFund_GeoHHI,data = homodf)
 
 
 #Risk ANALYSIS--------------------------------------------------------------------------------------------------------
+
+a <- dealdf$GeoHHI^3
+b <- dealdf$StageHHI^3
+c <- dealdf$PIGHHI^3
+ols1 <- lm(log((Gross_IRR/Fund_SD)+1)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2),data = dealdf)
+output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+print(output1)
+wb1 <- as_Workbook(output1)
+saveWorkbook(wb1,"SD_ols1.xlsx", overwrite = TRUE)
+histo(ols1$residuals, "residuals")
+plot(ols1)
+
+
+# identify+kill outliers
+outlier <- outlierTest(ols1)
+outliers <- as.numeric(names(outlier[["rstudent"]]))
+subdf <-subset(funddf,!(rownames(funddf) %in% outliers))
+
+ols2 <- lm(log(Fund_SD+1)~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI,data = subdf)
+output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+print(output2)
+wb2 <- as_Workbook(output2)
+saveWorkbook(wb2,"SD_ols2.xlsx", overwrite = TRUE)
+histo(ols2$residuals, "residuals")
+plot(ols2)
+
+
+
 
 # ols1 <- lm(Fund_SD~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size+as.factor(Deal_Year)+as.factor(Company_Country),data = homodf)
 # summary(ols1)
@@ -449,3 +353,11 @@ effect_plot(ols9, pred = LFund_GeoHHI,data = homodf)
 # plot(ols3)
 
 
+
+
+# exlude
+# identify+kill outliers
+# outlier <- outlierTest(ols2)
+# outliers <- as.numeric(names(outlier[["rstudent"]]))
+# subdf2 <-subset(dealdf,!(rownames(dealdf) %in% outliers))
+# subdf1 <- subset(dealdf,!(rownames(dealdf) %in% c(395)))

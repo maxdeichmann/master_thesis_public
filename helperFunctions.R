@@ -74,7 +74,7 @@ hhi <- function(df, variable, HHIName) {
     hhiReturn <-
       diversity(hhiMatrix, type = 'hh', category_row = TRUE)
     
-    # clculate (1 - HHI) to have diversification = 1 and specialisation = 0
+    # calculate (1 - HHI) to have diversification = 1 and specialisation = 0
     for (i in 1:nrow(hhiReturn)) {
       hhiReturn$HHI[i] <- 1 - hhiReturn$HHI[i]
     }
@@ -125,18 +125,12 @@ fundData <- function(dealdf) {
     "LFund_PICHHI",
     "LFund_PISHHI",
     "LFund_AvgHHI",
-    "Mean_PIC",
-    "Mean_PIS",
-    "Mean_PIG",
     "Popular_Country"
     
   )
   colClasses = c(
     "integer",
     "integer",
-    "double",
-    "double",
-    "double",
     "double",
     "double",
     "double",
@@ -206,7 +200,7 @@ fundData <- function(dealdf) {
       operating,
       log(operating),
       weightedAverage,
-      mean(subdf$Deal_Size),
+      median(subdf$Deal_Size),
       sd,
       log(sd),
       nrow(out),
@@ -233,9 +227,6 @@ fundData <- function(dealdf) {
             out$LPISHHI[nrow(out)],
             out$LGeoHHI[nrow(out)],
             out$LStageHHI[nrow(out)])),
-      round(mean(as.numeric(factor(out$PIC,unique(dealdf$PIC)))),0),
-      round(mean(as.numeric(factor(out$PIS,unique(dealdf$PIS)))),0),
-      round(mean(as.numeric(factor(out$PIG,unique(dealdf$PIG)))),0),
       country
     )
   }
@@ -444,6 +435,29 @@ cor.mtest <- function(mat, ...) {
   }
   colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
   p.mat
+}
+
+histo <- function(var, name="x-axis") {
+  h <- hist(var, breaks = 30, density = 30, xlab = name)
+  xfit <- seq(min(var), max(var), length = 40) 
+  yfit <- dnorm(xfit, mean = mean(var), sd = sd(var)) 
+  yfit <- yfit * diff(h$mids[1:2]) * length(var) 
+  lines(xfit, yfit, col = "black", lwd = 2)
+}
+
+correlation <- function(df, names) {
+  colnames(df) <- c(names)
+  M <<- cor(df)
+  p.mat <- cor.mtest(df)
+  col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+  corrplot(M, method="color", col=col(200),
+           type="upper", #order="hclust",
+           addCoef.col = "black", # Add coefficient of correlation
+           tl.col="black", tl.srt=45, #Text label color and rotation
+           # Combine with significance
+           p.mat = p.mat, sig.level = 0.01, insig = "blank"
+           # hide correlation coefficient on the principal diagonal
+  )
 }
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
