@@ -213,7 +213,7 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output1)
 # wb1 <- as_Workbook(output1)
-# saveWorkbook(wb1,"IRR_ols1.xlsx", overwrite = TRUE)
+# openxlsx::saveWorkbook(wb1,"IRR_ols1.xlsx", overwrite = TRUE)
 # histo(ols1$residuals, "residuals")
 # # plot(ols1)
 # 
@@ -234,9 +234,9 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output2)
 # wb2 <- as_Workbook(output2)
-# saveWorkbook(wb2,"IRR_ols2.xlsx", overwrite = TRUE)
+# openxlsx::saveWorkbook(wb2,"IRR_ols2.xlsx", overwrite = TRUE)
 # histo(ols2$residuals, "residuals")
-# plot(ols2)
+# # plot(ols2)
 # 
 # # vif
 # vif(ols2)
@@ -254,12 +254,26 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # output3 <- huxreg(ols3,fe3, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output3)
 # wb3 <- as_Workbook(output3)
-# saveWorkbook(wb3,"IRR_ols3.xlsx", overwrite = TRUE)
+# openxlsx::saveWorkbook(wb3,"IRR_ols3.xlsx", overwrite = TRUE)
 # histo(ols3$residuals, "residuals")
-# plot(ols3)
-
-
-
+# # plot(ols3)
+# 
+# # identify+kill outliers
+# outlierTest(ols3)
+# outlier <- outlierTest(ols3)
+# outliers <- as.numeric(names(outlier[["rstudent"]]))
+# subdf <-subset(dealdf,!(rownames(dealdf) %in% outliers))
+# 
+# # run analysis again
+# ols4 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size+as.factor(Deal_Year),data = subdf)
+# fe4 <- felm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size|Deal_Year,data = subdf)
+# output4 <- huxreg(ols4,fe4, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+# print(output4)
+# wb4 <- as_Workbook(output4)
+# openxlsx::saveWorkbook(wb4, file = "IRR_ols4.xlsx", overwrite = TRUE)
+# histo(ols4$residuals, "residuals")
+# plot(ols4)
+# 
 
 
 # END OF RETURN ANALYSIS
@@ -273,33 +287,28 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 
 #Risk ANALYSIS--------------------------------------------------------------------------------------------------------
 
-a <- dealdf$GeoHHI^3
-b <- dealdf$StageHHI^3
-c <- dealdf$PIGHHI^3
-ols1 <- lm(log((Gross_IRR/Fund_SD)+1)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2),data = dealdf)
+
+ols1 <- lm(Fund_SD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2),data = funddf)
 output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 print(output1)
 wb1 <- as_Workbook(output1)
-saveWorkbook(wb1,"SD_ols1.xlsx", overwrite = TRUE)
+openxlsx::saveWorkbook(wb1,"SD_ols1.xlsx", overwrite = TRUE)
 histo(ols1$residuals, "residuals")
-plot(ols1)
-
-
-# identify+kill outliers
-outlier <- outlierTest(ols1)
-outliers <- as.numeric(names(outlier[["rstudent"]]))
-subdf <-subset(funddf,!(rownames(funddf) %in% outliers))
-
-ols2 <- lm(log(Fund_SD+1)~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI,data = subdf)
-output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output2)
-wb2 <- as_Workbook(output2)
-saveWorkbook(wb2,"SD_ols2.xlsx", overwrite = TRUE)
-histo(ols2$residuals, "residuals")
-plot(ols2)
-
-
-
+# plot(ols1)
+# 
+# ols2 <- lm(log(Gross_IRR+1/Fund_SD)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size+as.factor(Deal_Year),data = dealdf)
+# output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+# print(output2)
+# wb2 <- as_Workbook(output2)
+# openxlsx::saveWorkbook(wb2,"SD_ols2.xlsx", overwrite = TRUE)
+# histo(ols2$residuals, "residuals")
+# plot(ols2)
+# 
+# # check normality
+# shapiro.test(ols2$residuals)
+# 
+# # # check heteroskedasticity
+# ncvTest(ols2)
 
 # ols1 <- lm(Fund_SD~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size+as.factor(Deal_Year)+as.factor(Company_Country),data = homodf)
 # summary(ols1)
