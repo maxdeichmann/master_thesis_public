@@ -117,7 +117,7 @@ for (a in c(hhiIndices, eiIndices)) {
 dealdf$LDeal_Size <- log(dealdf$Deal_Size)
 
 # dependent
-dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
+dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
 
 # create fund level data
 funddf <- fundData(dealdf,divIndices,fundDivIndices)
@@ -146,6 +146,10 @@ save(hhiIndices, file = "hhiIndices.RData")
 
 save(fundhhiIndices, file = "fundhhiIndices.RData")
 save(lfundhhiIndices, file = "lfundhhiIndices.RData")
+
+save(fundeiIndices, file = "fundeiIndices.RData")
+save(lfundeiIndices, file = "lfundeiIndices.RData")
+
 save(fundeiIndices, file = "fundrIndices.RData")
 save(lfundeiIndices, file = "lfundrIndices.RData")
 

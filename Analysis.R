@@ -55,13 +55,13 @@ load("fundDivIndices.RData")
 load("eiIndices.RData")
 load("fundhhiIndices.RData")
 load("lfundhhiIndices.RData")
-# load("fundeiIndices.RData")
-# load("lfundeiIndices.RData")
+load("fundeiIndices.RData")
+load("lfundeiIndices.RData")
 
 
 # filter for non errors
-is.na(dealdf) <- sapply(dealdf, is.infinite)
-dealdf <- na.omit(dealdf)
+# is.na(dealdf) <- sapply(dealdf, is.infinite)
+# dealdf <- na.omit(dealdf)
 # is.na(funddf) <- sapply(funddf, is.infinite)
 # subfunddf <- na.omit(funddf)
 
