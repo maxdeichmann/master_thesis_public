@@ -57,63 +57,100 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Spin-Off" ] <- "Early Stage VC"
 dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage VC" ] <- "Late Stage"
 dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 
+# Missing deal sizes values -> fund median
+# Missing IRR values -> WA deal size
+# Missing countries -> most investes
+dealdf <- dataCleaning(dealdf)
+
+# dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- dealdf$Fund_IRR[is.na(dealdf$Gross_IRR)]
+# dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- dealdf$Fund_Deal_Size[is.na(dealdf$Deal_Size)]
+# dealdf$Company_Country[is.na(dealdf$Company_Country)] <- dealdf$Popular_Country[is.na(dealdf$Company_Country)]
+
+
 # create dummy vector
 controlVector <- c()
 
-# add HHI on deal level
-hhis <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
-fundhhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI", "Fund_AvgHHI","LFund_GeoHHI",
-              "LFund_StageHHI","LFund_PIGHHI","LFund_PICHHI","LFund_PISHHI", "LFund_AvgHHI")
-dealdf<- hhi(dealdf,"Company_Country", "GeoHHI")
-dealdf<- hhi(dealdf,"Company_Stage", "StageHHI")
-dealdf<- hhi(dealdf,"PIG", "PIGHHI")
-dealdf<- hhi(dealdf,"PIC", "PICHHI")
-dealdf<- hhi(dealdf,"PIS", "PISHHI")
+# add deal level diversification indices
+measures <- c("hh","e")
+variables <- c("Company_Country","Company_Stage","PIG","PIC","PIS")
+hhiIndices <- c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI")
+lhhiIndices <- c("LGeoHHI","LStageHHI","LPIGHHI","LPICHHI","LPISHHI")
+eiIndices <- c("GeoEI","StageEI","PIGEI","PICEI","PISEI")
+leiIndices <- c("LGeoEI","LStageEI","LPIGEI","LPICEI","LPISEI")
+divIndices <- c(hhiIndices,eiIndices)
+
+fundhhiIndices <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Fund_PICHHI","Fund_PISHHI")
+lfundhhiIndices <- c("LFund_GeoHHI","LFund_StageHHI","LFund_PIGHHI","LFund_PICHHI","LFund_PISHHI")
+fundeiIndices <- c("Fund_GeoEI","Fund_StageEI","Fund_PIGEI","Fund_PICEI","Fund_PISEI")
+lfundeiIndices <- c("LFund_GeoEI","LFund_StageEI","LFund_PIGEI","LFund_PICEI","LFund_PISEI")
+
+
+fundDivIndices <- c()
+for (a in divIndices) {
+  fundDivIndices <- c(fundDivIndices,paste('Fund_', a, sep = ''))
+}
+for (a in divIndices) {
+  fundDivIndices <- c(fundDivIndices,paste('LFund_', a, sep = ''))
+}
+
+for (a in measures) {
+  for(i in 1:length(variables)) {
+    if(a == "hh") {
+      dealdf<- divers(dealdf,variables[i], hhiIndices[i],a)
+    } else {
+      dealdf<- divers(dealdf,variables[i], eiIndices[i],a) 
+    }
+  }
+}
+
 
 # deal year
 dealdf$Deal_Year <- year(dealdf$Deal_Date)
 
 # data transformation
 # independent
-dealdf$LGeoHHI = log(dealdf$GeoHHI+1)
-dealdf$LStageHHI = log(dealdf$StageHHI+1)
-dealdf$LPIGHHI = log(dealdf$PIGHHI+1)
-dealdf$LPICHHI = log(dealdf$PICHHI+1)
-dealdf$LPISHHI = log(dealdf$PISHHI+1)
+for (a in c(hhiIndices, eiIndices)) {
+  newName <- paste('L', a, sep = '')
+  divIndices <- c(divIndices,newName)
+  dealdf[[newName]] <- log(dealdf[[a]]+1)
+}
 dealdf$LDeal_Size <- log(dealdf$Deal_Size)
 
 # dependent
 dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
 
 # create fund level data
-funddf <- fundData(dealdf)
+funddf <- fundData(dealdf,divIndices,fundDivIndices)
 
 # add fund level hhi to deal levels
 dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", "Fund_SD","LFund_SD", "Number_Investments", 
-                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments",fundhhis,"Popular_Country")], 
+                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments","Popular_Country", fundDivIndices)], 
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience
 dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
 funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
 
-# Missing IRR values
-dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- dealdf$Fund_IRR[is.na(dealdf$Gross_IRR)]
-
-# Missing deal sizes
-dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- dealdf$Fund_Deal_Size[is.na(dealdf$Deal_Size)]
-
-# Missing countries
-dealdf$Company_Country[is.na(dealdf$Company_Country)] <- dealdf$Popular_Country[is.na(dealdf$Company_Country)]
 
 # create grouped hhi based on crossproduct
-groupdf <- hhiBuckets(10,dealdf,c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"),c("Gross_IRR", "Deal_Size"))
+# groupdf <- hhiBuckets(10,dealdf,c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"),c("Gross_IRR", "Deal_Size"))
 
 #save data
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
-save(controlVector, file = "controlVector.RData")
+
+save(divIndices, file = "divIndices.RData")
+save(fundDivIndices, file = "fundDivIndices.RData")
+save(eiIndices, file = "eiIndices.RData")
+save(hhiIndices, file = "hhiIndices.RData")
+
+
+save(fundhhiIndices, file = "fundhhiIndices.RData")
+save(lfundhhiIndices, file = "lfundhhiIndices.RData")
+save(fundeiIndices, file = "fundrIndices.RData")
+save(lfundeiIndices, file = "lfundrIndices.RData")
+
+
 save(dealdf,file="dataPreperation_deal.Rda")
 save(funddf,file="dataPreperation_fund.Rda")
-save(groupdf,file="dataPreperation_group.Rda")
 setwd("/Users/maximiliandeichmann/Documents/Education/TUM-BWL/Semester_4/MA/04_Statistics/Datensatz")
-excel_export(list(dealdf,funddf,groupdf), "dataPreperation.xlsx", table_names=c("deal", "fund", "group"))
+excel_export(list(dealdf,funddf), "dataPreperation.xlsx", table_names=c("deal", "fund"))

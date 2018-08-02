@@ -13,8 +13,15 @@ library(data.table)
 library(SDMTools)
 library(Hmisc)
 
+# A string or a vector of strings of nemonic strings referencing to the available diversity measures. 
+# The available measures are: "variety", (Shannon) "entropy", "blau","gini-simpson", "simpson", "hill-numbers", 
+# "herfindahl-hirschman", "berger-parker", "renyi", (Pielou) "evenness", "rao", "rao-stirling". 
+# A list of short mnemonics for each measure: "v", "e", "gs", "s", "td", "hh", "bp", "re", "ev", "r", and "rs". 
+# The default for type is "all" which computes all available formulas.
+
+
 # calculate and append hhi for deals
-hhi <- function(df, variable, HHIName) {
+divers <- function(df, variable, HHIName, type) {
 
   #check variables
   if (missing(df))
@@ -29,6 +36,8 @@ hhi <- function(df, variable, HHIName) {
     stop("variable must be a string")
   if (!is.character(HHIName))
     stop("HHIName must be a string")
+  if (!is.character(type))
+    stop("give an diversification type")
   
   # get number of funds
   funds <- unique(df$Fund_ID)
@@ -71,8 +80,7 @@ hhi <- function(df, variable, HHIName) {
     }
     
     # calculate HHI for the entire matrix at every investment stage of the fund
-    hhiReturn <-
-      diversity(hhiMatrix, type = 'hh', category_row = TRUE)
+    hhiReturn <- diversity(hhiMatrix, type = type, category_row = TRUE)
     
     # calculate (1 - HHI) to have diversification = 1 and specialisation = 0
     for (i in 1:nrow(hhiReturn)) {
@@ -82,7 +90,6 @@ hhi <- function(df, variable, HHIName) {
     # naming
     hhiReturn <-
       hhiReturn[order(as.numeric(rownames(hhiReturn))), , drop = FALSE]
-    assign('hhiReturn', hhiReturn, pos = .GlobalEnv)
     
     # manage output
     names(hhiReturn) <- c(HHIName)
@@ -96,9 +103,13 @@ hhi <- function(df, variable, HHIName) {
 }
 
 # crate dataframe on fund level
-fundData <- function(dealdf) {
+fundData <- function(dealdf, divIndices, fundDivIndices) {
   if (!is.data.frame(dealdf))
     stop("df must be data frame")
+  if (!is.vector(divIndices))
+    stop("divIndices must be vector")
+  if (!is.vector(fundDivIndices))
+    stop("fundDivIndeces must be vector")
   
   # create columns
   col.names = c(
@@ -113,20 +124,8 @@ fundData <- function(dealdf) {
     "LNumber_Investments",
     "Total_Investments",
     "LTotal_Investments",
-    "Fund_GeoHHI",
-    "Fund_StageHHI",
-    "Fund_PIGHHI",
-    "Fund_PICHHI",
-    "Fund_PISHHI",
-    "Fund_AvgHHI",
-    "LFund_GeoHHI",
-    "LFund_StageHHI",
-    "LFund_PIGHHI",
-    "LFund_PICHHI",
-    "LFund_PISHHI",
-    "LFund_AvgHHI",
-    "Popular_Country"
-    
+    "Popular_Country",
+    fundDivIndices
   )
   colClasses = c(
     "integer",
@@ -140,24 +139,13 @@ fundData <- function(dealdf) {
     "double",
     "double",
     "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "double",
-    "character"
+    "character",
+    rep("double", each = length(fundDivIndices))
   )
   
   funddf <- read.table(text = "",
                        colClasses = colClasses,
                        col.names = col.names)
-  
   # get number of funds
   funds <- unique(dealdf$Fund_ID)
   nrOfFunds = length(funds)
@@ -179,9 +167,9 @@ fundData <- function(dealdf) {
     # sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
     # operating years
-    a <- year(out$Deal_Date[1])
-    b <- year(out$Deal_Date[nrow(out)])
-    operating <- b - a
+    st <- year(out$Deal_Date[1])
+    en <- year(out$Deal_Date[nrow(out)])
+    operating <- en - st
     
     # most common country
     factor <- factor(subdf$Company_Country,unique(dealdf$Company_Country))
@@ -195,7 +183,7 @@ fundData <- function(dealdf) {
     }
     
     # create row
-    funddf[nrow(funddf) + 1,] = list(
+    row = list(
       out$Fund_ID[nrow(out)],
       operating,
       log(operating),
@@ -207,28 +195,15 @@ fundData <- function(dealdf) {
       log(nrow(out)),
       sum(subdf$Deal_Size),
       log(sum(subdf$Deal_Size)),
-      out$GeoHHI[nrow(out)],
-      out$StageHHI[nrow(out)],
-      out$PIGHHI[nrow(out)],
-      out$PICHHI[nrow(out)],
-      out$PISHHI[nrow(out)],
-      mean(c(out$PIGHHI[nrow(out)],
-             out$PICHHI[nrow(out)],
-             out$PISHHI[nrow(out)],
-             out$GeoHHI[nrow(out)],
-             out$StageHHI[nrow(out)])),
-      out$LGeoHHI[nrow(out)],
-      out$LStageHHI[nrow(out)],
-      out$LPIGHHI[nrow(out)],
-      out$LPICHHI[nrow(out)],
-      out$LPISHHI[nrow(out)],
-      mean(c(out$LPIGHHI[nrow(out)],
-            out$LPICHHI[nrow(out)],
-            out$LPISHHI[nrow(out)],
-            out$LGeoHHI[nrow(out)],
-            out$LStageHHI[nrow(out)])),
       country
     )
+    
+    for (b in 1:length(divIndices)) {
+      row[b+12] <- out[[divIndices[b]]][[nrow(out)]]
+    }
+    
+    funddf[nrow(funddf) + 1,] = row
+    
   }
   return(funddf)
 }
@@ -273,6 +248,60 @@ hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
   return(groupdf)
   
 }
+
+# crate dataframe on fund level
+dataCleaning <- function(dealdf) {
+  if (!is.data.frame(dealdf))
+    stop("df must be data frame")
+  
+  # get number of funds
+  funds <- unique(dealdf$Fund_ID)
+  nrOfFunds = length(funds)
+  
+  #loop through funds
+  for (a in seq(from = 1, to = nrOfFunds, by = 1)) {
+    
+    # create fund subset
+    subdf <- subset(dealdf, Fund_ID == funds[a])
+    
+    # sort by date
+    out <- subdf[order(as.Date(subdf$Deal_Date)),]
+    subdf <- na.omit(out)
+    
+    # missing IRR -> WA deal size
+    weights <- subdf$Deal_Size/sum(subdf$Deal_Size)
+    weightedAverage <- wt.mean(subdf$Gross_IRR, weights)
+    out$Gross_IRR[is.na(out$Gross_IRR)] <- weightedAverage
+    
+    # missing country -> most often used
+    factor <- factor(subdf$Company_Country,unique(dealdf$Company_Country))
+    countries <- as.numeric(factor)
+    index <- as.numeric(names(which.max(table(countries))))
+    
+    if(nrow(out) == 1) {
+      country <<- out$Company_Country[nrow(out)]
+    } else {
+      country <<- unique(dealdf$Company_Country)[index]
+    }
+    out$Company_Country[is.na(out$Company_Country)] <- country
+    
+    # missing deal size
+    out$Deal_Size[is.na(out$Deal_Size)] <- median(subdf$Deal_Size)
+    
+    # put subdf in dealdf
+    if(a == 1) {
+      output <- out
+    } else {
+      output <- rbind(output, out)
+    }
+    
+  }
+  return(output)
+}
+
+
+
+
 
 sdDistance <- function(hhis, df) {
   if (missing(df) | !is.data.frame(df))
@@ -319,7 +348,6 @@ plotModel <- function(model,
   if(missing(xRange)) {
     xRange <- c(0,1)
   }
-  print(independent)
   values <- rep("numeric", length(independent))
   legendTitle <- "Independent variables"
   sequence <- seq(xRange[1], xRange[2], length.out = nrow(df))
@@ -331,11 +359,8 @@ plotModel <- function(model,
   }
   newValues <- predict.lm(model, newRange) #, type = "terms", terms = independent
   pred <- make_predictions(model = model, pred = independent[1])
-  print(pred)
+
   
-  
-  print(plot(newValues))
-  print(newValues)
   plot <- ggplot() +
     ggtitle(title) +
     xlab(xAxis) +
@@ -380,13 +405,10 @@ plotModel1 <- function(model,
   if(missing(xRange)) {
     xRange <- c(0,1)
   }
-  print(independent)
-  
+
   coe <- coef(model)
   a <- coe[["poly(LFund_GeoHHI, 2)2"]]
-  print(a)
-  print(coe)
-  print("Hallo")
+
   
   plot <- ggplot() +
     ggtitle(title) +
@@ -403,7 +425,6 @@ plotModel1 <- function(model,
     plot <- plot + eval(parse(text = loop_input))
   }
   fun.1 <- function(x) coe[["poly(LFund_GeoHHI, 2)2"]]*x^2 + coe[["poly(LFund_GeoHHI, 2)1"]]*x
-  print(fun.1)
   fun.2 <- function(x) -1 * x + 10
   fun.3 <- function(x) 3 * x + 2
   # plot + stat_function(fun = fun.1)
@@ -459,6 +480,21 @@ correlation <- function(df, names) {
            # hide correlation coefficient on the principal diagonal
   )
 }
+
+scatterTrend <- function(dependent, independent, df) {
+  outcome <- list()
+  for (i in independent) {
+    temp <- ggplot(data = df,aes(df[[i]],df[[dependent]])) + theme_minimal() +
+      geom_point() + geom_smooth(method = "lm",formula=y ~ poly(x, 2, raw=TRUE)) +
+      xlab(i) + ylab(dependent)
+    outcome[[i]] <- temp
+  }
+  plot <- wrap_plots(outcome)
+  print(plot)
+  return(plot)
+}
+
+
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
 # remove_outliers <- function(x, na.rm = TRUE, ...) {
