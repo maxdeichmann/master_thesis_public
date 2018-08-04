@@ -62,6 +62,8 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 # Missing countries -> most investes
 dealdf <- dataCleaning(dealdf)
 
+dealdf$Deal_Return <- dealdf$Deal_Size * dealdf$Deal_Size
+
 # dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- dealdf$Fund_IRR[is.na(dealdf$Gross_IRR)]
 # dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- dealdf$Fund_Deal_Size[is.na(dealdf$Deal_Size)]
 # dealdf$Company_Country[is.na(dealdf$Company_Country)] <- dealdf$Popular_Country[is.na(dealdf$Company_Country)]
@@ -112,7 +114,7 @@ dealdf$Deal_Year <- year(dealdf$Deal_Date)
 for (a in c(hhiIndices, eiIndices)) {
   newName <- paste('L', a, sep = '')
   divIndices <- c(divIndices,newName)
-  dealdf[[newName]] <- log(dealdf[[a]]+1)
+  dealdf[[newName]] <- log(dealdf[[a]]+2)
 }
 dealdf$LDeal_Size <- log(dealdf$Deal_Size)
 

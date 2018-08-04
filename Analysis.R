@@ -38,7 +38,7 @@ library(corrplot)
 library(knitr)
 library(xtable)
 require(foreign)
-require(MASS)
+require(MASS) 
 
 # import sources
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
@@ -83,16 +83,16 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 
 # a <- ggplot() + geom_histogram(data=dealdf, aes(GeoHHI)) + theme_minimal()
 # b <- ggplot() + geom_histogram(data=dealdf, aes(StageHHI)) + theme_minimal()
-# c <- ggplot() + geom_histogram(data=dealdf, aes(PIGHHI)) + theme_minimal()
-# d <- ggplot() + geom_histogram(data=dealdf, aes(PICHHI)) + theme_minimal()
-# e <- ggplot() + geom_histogram(data=dealdf, aes(PISHHI)) + theme_minimal()
+# c <- ggplot() + geom_histogram(data=dealdf, aes(PISHHI)) + theme_minimal()
+# d <- ggplot() + geom_histogram(data=dealdf, aes(PIGHHI)) + theme_minimal()
+# e <- ggplot() + geom_histogram(data=dealdf, aes(PICHHI)) + theme_minimal()
 # plot_grid(a,b,c,d,e)
 # 
 # a <- ggplot() + geom_histogram(data=dealdf, aes(LGeoHHI)) + theme_minimal()
 # b <- ggplot() + geom_histogram(data=dealdf, aes(LStageHHI)) + theme_minimal()
-# c <- ggplot() + geom_histogram(data=dealdf, aes(LPIGHHI)) + theme_minimal()
-# d <- ggplot() + geom_histogram(data=dealdf, aes(LPICHHI)) + theme_minimal()
-# e <- ggplot() + geom_histogram(data=dealdf, aes(LPISHHI)) + theme_minimal()
+# c <- ggplot() + geom_histogram(data=dealdf, aes(LPISHHI)) + theme_minimal()
+# d <- ggplot() + geom_histogram(data=dealdf, aes(LPIGHHI)) + theme_minimal()
+# e <- ggplot() + geom_histogram(data=dealdf, aes(LPICHHI)) + theme_minimal()
 # plot_grid(a,b,c,d,e)
 # 
 # a <- hist(dealdf$Fund_GeoHHI)#ggplot() + geom_histogram(data=funddf, aes(Fund_GeoHHI)) + theme_minimal()
@@ -141,7 +141,6 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # b <- ggplot(dealdf, aes(LDeal_Size)) + geom_histogram() + theme_minimal()
 # plot_grid(a,b)
 
-# Plotting Fund level
 #--plotting fund level------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # fund level
 # a <- ggplot(funddf, aes(Number_Investments)) + geom_histogram() + theme_minimal()
@@ -166,29 +165,24 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 
 # a <- ggplot(funddf, aes(Fund_GeoHHI)) + geom_histogram() + theme_minimal()
 # b <- ggplot(funddf, aes(Fund_StageHHI)) + geom_histogram() + theme_minimal()
-# c <- ggplot(funddf, aes(Fund_PIGHHI)) + geom_histogram() + theme_minimal()
-# d <- ggplot(funddf, aes(Fund_PISHHI)) + geom_histogram() + theme_minimal()
+# c <- ggplot(funddf, aes(Fund_PISHHI)) + geom_histogram() + theme_minimal()
+# d <- ggplot(funddf, aes(Fund_PIGHHI)) + geom_histogram() + theme_minimal()
 # e <- ggplot(funddf, aes(Fund_PICHHI)) + geom_histogram() + theme_minimal()
 # plot_grid(a,b,c,d,e)
-# 
+
 # a <- ggplot(funddf, aes(LFund_GeoHHI)) + geom_histogram() + theme_minimal()
 # b <- ggplot(funddf, aes(LFund_StageHHI)) + geom_histogram() + theme_minimal()
-# c <- ggplot(funddf, aes(LFund_PIGHHI)) + geom_histogram() + theme_minimal()
-# d <- ggplot(funddf, aes(LFund_PISHHI)) + geom_histogram() + theme_minimal()
+# c <- ggplot(funddf, aes(LFund_PISHHI)) + geom_histogram() + theme_minimal()
+# d <- ggplot(funddf, aes(LFund_PIGHHI)) + geom_histogram() + theme_minimal()
 # e <- ggplot(funddf, aes(LFund_PICHHI)) + geom_histogram() + theme_minimal()
 # plot_grid(a,b,c,d,e)
 
+# independent <- c("Fund_SD")#,"Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_PICHHI")
+# dependent <- "LGross_IRR"
+# scatterTrend(dependent,independent,dealdf)
 
-# hhis <- c("Geo_HHI","Stage_HHI","PICHHI","PISHHI","PIGHHI")
-# outcome <- list()
-# dependent <- "Fund_SD"
-# for (hhi in hhis) {
-#   temp <- ggplot(data = dealdf,aes(dealdf[[hhi]],dealdf[[dependent]])) + theme_minimal() +
-#     geom_point() + geom_smooth(method = "lm",formula=y ~ poly(x, 2, raw=TRUE)) +
-#     xlab(hhi) + ylab(dependent)
-#   outcome[[hhi]] <- temp
-# }
-# wrap_plots(outcome)
+
+
 
 #--correlation matrices-----------------------------------------------------------------------------------------------------
 
@@ -196,10 +190,7 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # ind <- c(dealdf$GeoHHI, dealdf$StageHHI, dealdf$PIGHHI, dealdf$PISHHI, dealdf$PICHHI)
 # ma <- matrix(ind, ncol = 5, nrow = nrow(dealdf))
 # cor(dealdf$Gross_IRR, ma)
-# 
-# ind <- c(subfunddf$Fund_GeoHHI, subfunddf$Fund_StageHHI, subfunddf$Fund_PIGHHI, subfunddf$Fund_PISHHI, subfunddf$Fund_PICHHI)
-# ma <- matrix(ind, ncol = 5, nrow = nrow(subfunddf))
-# cor(subfunddf$Fund_SD, ma)
+
 
 
 #RETURN ANALYSIS--------------------------------------------------------------------------------------------------------
@@ -209,7 +200,7 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 #ols1 <- lm(LGross_IRR~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+as.factor(Deal_Year),data = dealdf)
 
 #g <- glm(formula = (Gross_IRR+1)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year), family = "poisson", data = dealdf)
-ols1 <- lm(LGross_IRR~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),data = dealdf)
+ols1 <- lm(Gross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),data = dealdf)
 output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 print(output1)
 wb1 <- as_Workbook(output1)
@@ -217,11 +208,34 @@ openxlsx::saveWorkbook(wb1,"IRR_ols1.xlsx", overwrite = TRUE)
 histo(ols1$residuals, "residuals")
 # plot(ols1)
 
+
+ols2 <- lm(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = dealdf)
+output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+print(output2)
+wb1 <- as_Workbook(output2)
+openxlsx::saveWorkbook(wb1,"IRR_ols2.xlsx", overwrite = TRUE)
+histo(ols2$residuals, "residuals")
+# plot(ols2)
+
 # check normality
-shapiro.test(ols1$residuals)
+shapiro.test(ols2$residuals)
 
 # check heteroskedasticity
-ncvTest(ols1)
+ncvTest(ols2)
+
+# outlier
+subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395)))
+
+ols3 <- lm(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = subdf)
+output3 <- huxreg(ols3, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
+print(output3)
+wb3 <- as_Workbook(output3)
+openxlsx::saveWorkbook(wb3,"IRR_ols3.xlsx", overwrite = TRUE)
+histo(ols3$residuals, "residuals")
+plot(ols3)
+
+
+
 
 # check correlation
 va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI, dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years, dealdf$Deal_Year, dealdf$Deal_Size)

@@ -464,6 +464,7 @@ histo <- function(var, name="x-axis") {
   yfit <- dnorm(xfit, mean = mean(var), sd = sd(var)) 
   yfit <- yfit * diff(h$mids[1:2]) * length(var) 
   lines(xfit, yfit, col = "black", lwd = 2)
+  return(h)
 }
 
 correlation <- function(df, names) {
@@ -483,15 +484,20 @@ correlation <- function(df, names) {
 
 scatterTrend <- function(dependent, independent, df) {
   outcome <- list()
-  for (i in independent) {
-    temp <- ggplot(data = df,aes(df[[i]],df[[dependent]])) + theme_minimal() +
-      geom_point() + geom_smooth(method = "lm",formula=y ~ poly(x, 2, raw=TRUE)) +
-      xlab(i) + ylab(dependent)
-    outcome[[i]] <- temp
+  
+  for (i in 1:length(independent)) {
+    local({
+      i <- i
+      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]])) + theme_minimal() +
+        geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE))+
+        xlab(independent[i]) + ylab(dependent)
+      outcome[[i]] <<- temp
+    })
+    
   }
-  plot <- wrap_plots(outcome)
+  
+  plot <- grid.arrange(grobs = outcome, top="Main Title")
   print(plot)
-  return(plot)
 }
 
 
