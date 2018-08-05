@@ -127,7 +127,7 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # shapiro.test(dealdf$Fund_PIGHHI)
 # shapiro.test(dealdf$Gross_IRR)
 
-# scatterTrend("LGross_IRR",lfundrIndices, dealdf)
+scatterTrend("LGross_IRR",lfundhhiIndices, dealdf)
 
 
 
@@ -199,14 +199,18 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # run polynomial analysis
 #ols1 <- lm(LGross_IRR~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+as.factor(Deal_Year),data = dealdf)
 
-#g <- glm(formula = (Gross_IRR+1)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year), family = "poisson", data = dealdf)
-ols1 <- lm(Gross_IRR~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),data = dealdf)
-output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output1)
-wb1 <- as_Workbook(output1)
-openxlsx::saveWorkbook(wb1,"IRR_ols1.xlsx", overwrite = TRUE)
-histo(ols1$residuals, "residuals")
-# plot(ols1)
+ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),
+            dealdf,
+            "IRR_ols1.xlsx",
+            TRUE)
+
+# outlier
+subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
+
+ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),
+            subdf,
+            "IRR_ols2.xlsx",
+            TRUE)
 
 
 ols2 <- lm(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = dealdf)
@@ -226,7 +230,7 @@ ncvTest(ols2)
 # outlier
 subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395)))
 
-ols3 <- lm(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year),data = subdf)
+ols3 <- lm(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+Number_Investments+Total_Investments+as.factor(Deal_Year)+as.factor(Fund_ID),data = subdf)
 output3 <- huxreg(ols3, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 print(output3)
 wb3 <- as_Workbook(output3)

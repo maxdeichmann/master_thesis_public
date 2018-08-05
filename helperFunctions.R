@@ -484,13 +484,17 @@ correlation <- function(df, names) {
 
 scatterTrend <- function(dependent, independent, df) {
   outcome <- list()
-  
+  mycolours <- c("highlight" = "red", "normal" = "grey50")
+  df$highlight <- ifelse(df$Deal_ID == 365, "highlight", "normal")
   for (i in 1:length(independent)) {
     local({
       i <- i
-      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]])) + theme_minimal() +
+      mycolours <- mycolours
+      df <- df
+      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]], colour = highlight)) + theme_minimal() +
         geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE))+
-        xlab(independent[i]) + ylab(dependent)
+        xlab(independent[i]) + ylab(dependent) +
+        scale_color_manual("Status", values = mycolours)
       outcome[[i]] <<- temp
     })
     
@@ -500,6 +504,19 @@ scatterTrend <- function(dependent, independent, df) {
   print(plot)
 }
 
+
+olsAnalysis <- function(fn, data, filename, plot = FALSE) {
+  ols <- lm(fn,data = data)
+  print(summary(ols))
+  output <- huxreg(ols, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'), error_pos = 'right')
+  openxlsx::saveWorkbook(as_Workbook(output),filename, overwrite = TRUE)
+  if (plot == TRUE) {
+    histo(ols$residuals, "residuals")
+    plot(ols) 
+  }
+  
+  return(ols)
+}
 
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
