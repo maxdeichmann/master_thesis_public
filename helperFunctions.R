@@ -505,11 +505,17 @@ scatterTrend <- function(dependent, independent, df) {
 }
 
 
-olsAnalysis <- function(fn, data, filename, plot = FALSE) {
+olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot = FALSE) {
   ols <- lm(fn,data = data)
   print(summary(ols))
   output <- huxreg(ols, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'), error_pos = 'right')
   openxlsx::saveWorkbook(as_Workbook(output),filename, overwrite = TRUE)
+  
+  if(normalityTest == TRUE) {
+    print(shapiro.test(ols$residuals))
+    # print(ncvTest(ols))
+  }
+  
   if (plot == TRUE) {
     histo(ols$residuals, "residuals")
     plot(ols) 

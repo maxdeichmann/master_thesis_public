@@ -62,7 +62,6 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 # Missing countries -> most investes
 dealdf <- dataCleaning(dealdf)
 
-dealdf$Deal_Return <- dealdf$Deal_Size * dealdf$Deal_Size
 
 # dealdf$Gross_IRR[is.na(dealdf$Gross_IRR)] <- dealdf$Fund_IRR[is.na(dealdf$Gross_IRR)]
 # dealdf$Deal_Size[is.na(dealdf$Deal_Size)] <- dealdf$Fund_Deal_Size[is.na(dealdf$Deal_Size)]
