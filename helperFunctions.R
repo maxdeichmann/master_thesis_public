@@ -482,19 +482,23 @@ correlation <- function(df, names) {
   )
 }
 
-scatterTrend <- function(dependent, independent, df) {
+scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
   outcome <- list()
-  mycolours <- c("highlight" = "red", "normal" = "grey50")
-  df$highlight <- ifelse(df$Deal_ID == 365, "highlight", "normal")
+  if(highlight == TRUE) {
+    mycolours <- c("highlight" = "red", "normal" = "grey50")
+    df$highlight <- ifelse(df$Deal_ID == 365, "highlight", "normal") 
+  }
   for (i in 1:length(independent)) {
     local({
       i <- i
       mycolours <- mycolours
       df <- df
-      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]], colour = highlight)) + theme_minimal() +
-        geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE))+
-        xlab(independent[i]) + ylab(dependent) +
-        scale_color_manual("Status", values = mycolours)
+      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]], colour = highlight)) + theme_minimal() + #
+        geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE)) +
+        xlab(independent[i]) + ylab(dependent)
+      if(highlight == TRUE) {
+        temp = temp + scale_color_manual("Status", values = mycolours)
+      }
       outcome[[i]] <<- temp
     })
     

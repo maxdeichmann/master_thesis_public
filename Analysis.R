@@ -37,8 +37,8 @@ library(car)
 library(corrplot)
 library(knitr)
 library(xtable)
-require(foreign)
-require(MASS) 
+library(foreign)
+library(MASS) 
 library(rcompanion)
 library(sandwich)
 library(lmtest)
@@ -62,6 +62,7 @@ load("lfundhhiIndices.RData")
 load("fundeiIndices.RData")
 load("lfundeiIndices.RData")
 
+hhiIndices <- c("GeoHHI","StageHHI","PISHHI","PIGHHI","PICHHI")
 
 # filter for non errors
 # is.na(dealdf) <- sapply(dealdf, is.infinite)
@@ -131,7 +132,7 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 # shapiro.test(dealdf$Fund_PIGHHI)
 # shapiro.test(dealdf$Gross_IRR)
 
-scatterTrend("LGross_IRR",lfundhhiIndices, dealdf)
+# scatterTrend("LGross_IRR",lfundhhiIndices, dealdf)
 
 
 
@@ -180,13 +181,13 @@ scatterTrend("LGross_IRR",lfundhhiIndices, dealdf)
 # d <- ggplot(funddf, aes(LFund_PIGHHI)) + geom_histogram() + theme_minimal()
 # e <- ggplot(funddf, aes(LFund_PICHHI)) + geom_histogram() + theme_minimal()
 # plot_grid(a,b,c,d,e)
-
-# independent <- c("Fund_SD")#,"Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_PICHHI")
+# dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
+# independent <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_PICHHI")
 # dependent <- "LGross_IRR"
 # scatterTrend(dependent,independent,dealdf)
 
-
-
+# scatterTrend("Fund_SD",hhiIndices, dealdf)
+# scatterTrend("Gross_IRR",c("Fund_SD"), dealdf)
 
 #--correlation matrices-----------------------------------------------------------------------------------------------------
 
@@ -200,82 +201,81 @@ scatterTrend("LGross_IRR",lfundhhiIndices, dealdf)
 #RETURN ANALYSIS--------------------------------------------------------------------------------------------------------
 
 
-# run polynomial analysis
-#ols1 <- lm(LGross_IRR~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+as.factor(Deal_Year),data = dealdf)
-
-ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),
-            dealdf,
-            "IRR_ols1.xlsx",
-            normalityTest = TRUE,
-            plot = FALSE)
-
-# outlier
-subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
-
-ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),
-            subdf,
-            "IRR_ols2.xlsx",
-            normalityTest = TRUE,
-            plot = FALSE)
-
-# Next step: transform variables: http://rcompanion.org/handbook/I_12.html
-# box cox
-Box = boxcox((dealdf$Gross_IRR+2) ~ 1, lambda = seq(-6,6,0.1))
-Cox = data.frame(Box$x, Box$y)
-Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
-Cox2[1,]
-lambda = Cox2[1, "Box.x"]
-T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
-hist(T_box)
-
-
-# turkey
-T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
-hist(T_tuk)
-
-shapiro.test(T_box)
-shapiro.test(T_tuk)
-
-ols3 <- olsAnalysis(T_tuk~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+as.factor(Deal_Year),
-                    dealdf,
-                    "IRR_ols3.xlsx",
-                    normalityTest = TRUE,
-                    plot = FALSE)
-
-
-#Next step:  add independent variables
-# check correlation
-va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI, dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years, dealdf$Deal_Year, dealdf$Deal_Size)
-na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
-correlation(va,na)
-
-ols4 <- olsAnalysis(T_tuk~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+Operating_Years+Operating_Years+Deal_Size+as.factor(Deal_Year),
-                    dealdf,
-                    "IRR_ols4.xlsx",
-                    normalityTest = TRUE,
-                    plot = FALSE)
-# VIF
+# # run polynomial analysis
+# #ols1 <- lm(LGross_IRR~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+as.factor(Deal_Year),data = dealdf)
+# 
+# ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+#             dealdf,
+#             "IRR_ols1.xlsx",
+#             normalityTest = TRUE,
+#             plot = FALSE)
+# 
+# # outlier
+# subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
+# 
+# ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+#             subdf,
+#             "IRR_ols2.xlsx",
+#             normalityTest = TRUE,
+#             plot = FALSE)
+# 
+# # Next step: transform variables: http://rcompanion.org/handbook/I_12.html
+# # box cox
+# Box = boxcox((dealdf$Gross_IRR+2) ~ 1, lambda = seq(-6,6,0.1))
+# Cox = data.frame(Box$x, Box$y)
+# Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
+# Cox2[1,]
+# lambda = Cox2[1, "Box.x"]
+# T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
+# hist(T_box)
+# 
+# 
+# # turkey
+# T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
+# hist(T_tuk)
+# 
+# shapiro.test(T_box)
+# shapiro.test(T_tuk)
+# 
+# ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+#                     dealdf,
+#                     "IRR_ols3.xlsx",
+#                     normalityTest = TRUE,
+#                     plot = FALSE)
+# 
+# 
+# #Next step:  add independent variables
+# # check correlation
+# va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI, dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years, dealdf$Deal_Year, dealdf$Deal_Size)
+# na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
+# correlation(va,na)
+# 
+# ols4 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Operating_Years+Deal_Size+as.factor(Deal_Year),
+#                     dealdf,
+#                     "IRR_ols4.xlsx",
+#                     normalityTest = TRUE,
+#                     plot = TRUE)
+# # VIF
 # vif(ols4)
-
-
-# Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
-co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
-print(co)
-
-
-
-# entropy index
-fe5 <- felm(LGross_IRR~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Number_Investments+Total_Investments+Deal_Size|Deal_Year,data = dealdf)
-output5 <- huxreg(fe3,fe5, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
-print(output5)
-wb5 <- as_Workbook(output5)
-openxlsx::saveWorkbook(wb5,"IRR_ols5.xlsx", overwrite = TRUE)
-histo(fe5$residuals, "residuals")
-
+# 
+# 
+# # Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
+# co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
+# print(co)
+# 
+# 
+# # Next step:
+# ols5 <- olsAnalysis(T_tuk~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Operating_Years+Operating_Years+Deal_Size+as.factor(Deal_Year),
+#                     dealdf,
+#                     "IRR_ols5.xlsx",
+#                     normalityTest = TRUE,
+#                     plot = FALSE)
+# output <- huxreg(ols4,ols5, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'), error_pos = 'right')
+# openxlsx::saveWorkbook(as_Workbook(output),"IRR_ols5.xlsx", overwrite = TRUE)
+# 
+# plot_summs(ols4, ols5, model.names = c("HHI","EI"))
 
 # END OF RETURN ANALYSIS
-
-
 
 
 
@@ -292,7 +292,7 @@ histo(fe5$residuals, "residuals")
 # openxlsx::saveWorkbook(wb1,"SD_ols1.xlsx", overwrite = TRUE)
 # histo(ols1$residuals, "residuals")
 # plot(ols1)
-# 
+#
 # ols2 <- lm(log(Gross_IRR+1/Fund_SD)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Number_Investments+Total_Investments+Deal_Size+as.factor(Deal_Year),data = dealdf)
 # output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output2)
@@ -300,20 +300,20 @@ histo(fe5$residuals, "residuals")
 # openxlsx::saveWorkbook(wb2,"SD_ols2.xlsx", overwrite = TRUE)
 # histo(ols2$residuals, "residuals")
 # plot(ols2)
-# 
+#
 # # check normality
 # shapiro.test(ols2$residuals)
-# 
+#
 # # # check heteroskedasticity
 # ncvTest(ols2)
 
 # ols1 <- lm(Fund_SD~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size+as.factor(Deal_Year)+as.factor(Company_Country),data = homodf)
 # summary(ols1)
-# 
+#
 # # put into fe model
 # fe <- felm(Fund_SD~poly(LFund_GeoHHI,2)+poly(LFund_StageHHI,2)+poly(LFund_PIGHHI,2)+LNumber_Investments+Deal_Size|Deal_Year+Company_Country, data = homodf)
 # summary(fe)
-# 
+#
 # output1 <- huxreg(ols1,fe, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output1)
 # wb1 <- as_Workbook(output1)
@@ -327,7 +327,7 @@ histo(fe5$residuals, "residuals")
 # run with dealdf and log
 # ols2 <- lm(log(Fund_SD)~poly(LGeoHHI,2)+poly(LStageHHI,2)+poly(LPIGHHI,1)+Number_Investments,data = dealdf)
 # summary(ols2)
-# 
+#
 # output2 <- huxreg(ols2, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output2)
 # wb2 <- as_Workbook(output2)
@@ -337,17 +337,17 @@ histo(fe5$residuals, "residuals")
 # ncvTest(ols2)
 # vif(ols2)
 # #plot(ols2)
-# 
+#
 # outliers <- as.numeric(names(outlier[["rstudent"]]))
-# 
+#
 # # kill outliers
 # subdealdf <- subset(dealdf,!(rownames(dealdf) %in% outliers))
-# 
+#
 # # run without outliers and logarithmic
 # ols3 <- lm(log(Fund_SD)~poly(LGeoHHI,2)+poly(LStageHHI,2)+poly(LPIGHHI,1)+Number_Investments,data = subdealdf)
 # summary(ols3)
 # plot(ols3)
-# 
+#
 # output3 <- huxreg(ols3, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
 # print(output3)
 # wb3 <- as_Workbook(output3)
@@ -361,6 +361,26 @@ histo(fe5$residuals, "residuals")
 
 
 #Risk/Return ANALYSIS--------------------------------------------------------------------------------------------------------
+
+
+T_tuk = transformTukey(funddf$Fund_SD+2, plotit=FALSE)
+
+
+# ols1 <- olsAnalysis(T_tuk~as.factor(Fund_ID)+poly(GeoHHI,2)+poly(StageHHI,2)+poly(PIGHHI,2)+Operating_Years+Operating_Years+Deal_Size+as.factor(Deal_Year),
+#                                         dealdf,
+#                                         "SD_ols1.xlsx",
+#                                         normalityTest = TRUE,
+#                                         plot = TRUE)
+
+ols2 <- olsAnalysis(T_tuk~Fund_GeoHHI+Fund_StageHHI+Fund_PIGHHI+Operating_Years+Operating_Years,
+                    funddf,
+                    "SD_ols1.xlsx",
+                    normalityTest = TRUE,
+                    plot = TRUE)
+
+
+
+
 
 # ols1 <- lm(LGross_IRR~LFund_SD+as.factor(Deal_Year),data = dealdf)
 # output1 <- huxreg(ols1, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'))
