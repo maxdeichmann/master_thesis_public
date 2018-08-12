@@ -484,8 +484,8 @@ correlation <- function(df, names) {
 
 scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
   outcome <- list()
+  mycolours <- c("highlight" = "red", "normal" = "grey50")
   if(highlight == TRUE) {
-    mycolours <- c("highlight" = "red", "normal" = "grey50")
     df$highlight <- ifelse(df$Deal_ID == 365, "highlight", "normal") 
   }
   for (i in 1:length(independent)) {
@@ -493,9 +493,14 @@ scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
       i <- i
       mycolours <- mycolours
       df <- df
-      temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]], colour = highlight)) + theme_minimal() + #
-        geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE)) +
+      if(highlight == TRUE) {
+        temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]], colour = highlight)) + theme_minimal()
+      } else {
+        temp = ggplot(data = df, aes(df[[independent[i]]], df[[dependent]])) + theme_minimal()
+      }
+      temp <- temp + geom_point() + geom_smooth(method = "lm", formula = y ~ poly(x, 2, raw = TRUE)) +
         xlab(independent[i]) + ylab(dependent)
+      
       if(highlight == TRUE) {
         temp = temp + scale_color_manual("Status", values = mycolours)
       }
@@ -509,20 +514,29 @@ scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
 }
 
 
-olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot = FALSE) {
+olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot = FALSE, correlation = TRUE) {
   ols <- lm(fn,data = data)
   print(summary(ols))
-  output <- huxreg(ols, statistics = c('# observations' = 'nobs', 'R squared' = 'r.squared', 'adj. R squared' = 'adj.r.squared', 'F statistic' = 'statistic', 'P value' = 'p.value'), error_pos = 'right')
+  output <- huxreg(ols, statistics = c('# observations' = 'nobs', 
+                                       'R squared' = 'r.squared', 
+                                       'adj. R squared' = 'adj.r.squared', 
+                                       'F statistic' = 'statistic', 
+                                       'P value' = 'p.value'), 
+                   error_pos = 'right')
   openxlsx::saveWorkbook(as_Workbook(output),filename, overwrite = TRUE)
   
   if(normalityTest == TRUE) {
     print(shapiro.test(ols$residuals))
-    # print(ncvTest(ols))
+    print(lmtest::bptest(ols))
   }
   
   if (plot == TRUE) {
     histo(ols$residuals, "residuals")
     plot(ols) 
+  }
+  
+  if (correlation == TRUE) {
+    print(vif(ols))
   }
   
   return(ols)

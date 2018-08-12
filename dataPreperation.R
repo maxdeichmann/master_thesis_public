@@ -115,7 +115,7 @@ for (a in c(hhiIndices, eiIndices)) {
   divIndices <- c(divIndices,newName)
   dealdf[[newName]] <- log(dealdf[[a]]+2)
 }
-dealdf$LDeal_Size <- log(dealdf$Deal_Size)
+dealdf$LDeal_Size <- log(dealdf$Deal_Size+2)
 
 # dependent
 dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
@@ -124,8 +124,9 @@ dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
 funddf <- fundData(dealdf,divIndices,fundDivIndices)
 
 # add fund level hhi to deal levels
-dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", "Fund_SD","LFund_SD", "Number_Investments", 
-                                   "LNumber_Investments", "Total_Investments", "LTotal_Investments","Popular_Country", fundDivIndices)], 
+dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", 
+                                   "Fund_SD","LFund_SD", "Number_Investments", "LNumber_Investments", 
+                                   "Total_Investments", "LTotal_Investments","Popular_Country", fundDivIndices)], 
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience
