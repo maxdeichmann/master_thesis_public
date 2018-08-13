@@ -108,6 +108,10 @@ for (a in measures) {
 # deal year
 dealdf$Deal_Year <- year(dealdf$Deal_Date)
 
+# success variable
+dealdf$Success[dealdf$Gross_IRR > 0.1 ] <- 1
+dealdf$Success[dealdf$Gross_IRR <= 0.1 ] <- 0
+
 # data transformation
 # independent
 for (a in c(hhiIndices, eiIndices)) {
@@ -130,8 +134,9 @@ dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operat
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience
-dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
-funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
+# dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
+# funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
+dealdf <- dealdf[dealdf$Gross_IRR != -1,]
 
 
 # create grouped hhi based on crossproduct

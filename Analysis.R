@@ -201,95 +201,104 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 #RETURN ANALYSIS--------------------------------------------------------------------------------------------------------
 
 
-# # run polynomial analysis
-# ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
-#             dealdf,
-#             "IRR_ols1.xlsx",
-#             normalityTest = TRUE,
-#             plot = FALSE)
-# 
-# # outlier
-# subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
-# 
-# ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
-#             subdf,
-#             "IRR_ols2.xlsx",
-#             normalityTest = TRUE,
-#             plot = FALSE)
-# 
-# # Next step: transform variables: http://rcompanion.org/handbook/I_12.html
-# # box cox
-# Box = boxcox((dealdf$Gross_IRR+2) ~ 1, lambda = seq(-6,6,0.1))
-# Cox = data.frame(Box$x, Box$y)
-# Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
-# Cox2[1,]
-# lambda = Cox2[1, "Box.x"]
-# T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
-# hist(T_box)
-# 
-# 
-# # turkey
-# T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
-# hist(T_tuk)
-# 
-# shapiro.test(T_box)
-# shapiro.test(T_tuk)
-# 
-# ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
-#                     dealdf,
-#                     "IRR_ols3.xlsx",
-#                     normalityTest = TRUE,
-#                     plot = FALSE)
-# 
-# 
-# #Next step:  add independent variables
-# # check correlation
-# va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI, 
-#             dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years, 
-#             dealdf$Deal_Year, dealdf$Deal_Size)
-# na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
-# correlation(va,na)
-# 
-# ols4 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
+# run polynomial analysis
+ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+            dealdf,
+            "IRR_ols1.xlsx",
+            normalityTest = TRUE,
+            plot = FALSE)
+
+# outlier
+subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
+
+ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+            subdf,
+            "IRR_ols2.xlsx",
+            normalityTest = TRUE,
+            plot = FALSE)
+
+# Next step: transform variables: http://rcompanion.org/handbook/I_12.html
+# box cox
+Box = boxcox((dealdf$Gross_IRR+2) ~ 1, lambda = seq(-6,6,0.1))
+Cox = data.frame(Box$x, Box$y)
+Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
+Cox2[1,]
+lambda = Cox2[1, "Box.x"]
+T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
+hist(T_box)
+
+
+# turkey
+T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
+hist(T_tuk)
+
+shapiro.test(T_box)
+shapiro.test(T_tuk)
+
+ols3 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+                    dealdf,
+                    "IRR_ols3.xlsx",
+                    normalityTest = TRUE,
+                    plot = FALSE)
+
+
+#Next step:  add independent variables
+# check correlation
+va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI,
+            dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years,
+            dealdf$Deal_Year, dealdf$Deal_Size)
+na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
+correlation(va,na)
+
+ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
+                      as.factor(Deal_Year),
+                    dealdf,
+                    "IRR_ols4.xlsx",
+                    normalityTest = TRUE,
+                    plot = FALSE)
+# VIF
+vif(ols4)
+
+
+# Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
+co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
+print(co)
+
+#next step: other independent
+# ols4 <- olsAnalysis(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
 #                       as.factor(Deal_Year),
 #                     dealdf,
 #                     "IRR_ols4.xlsx",
 #                     normalityTest = TRUE,
-#                     plot = FALSE)
-# # VIF
-# vif(ols4)
-# 
-# 
-# # Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
-# co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
-# print(co)
-# 
-# 
-# # Next step:
-# ols5 <- olsAnalysis(T_tuk~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Operating_Years+Deal_Size+
-#                       as.factor(Deal_Year),
-#                     dealdf,
-#                     "IRR_ols5.xlsx",
-#                     normalityTest = TRUE,
-#                     plot = FALSE)
-# output <- huxreg(ols4,ols5, statistics = c('# observations' = 'nobs', 
-#                                            'R squared' = 'r.squared', 
-#                                            'adj. R squared' = 'adj.r.squared', 
-#                                            'F statistic' = 'statistic', 
-#                                            'P value' = 'p.value'), 
-#                  error_pos = 'right')
-# openxlsx::saveWorkbook(as_Workbook(output),"IRR_ols5.xlsx", overwrite = TRUE)
-# 
-# plot_summs(ols4, ols5, model.names = c("HHI","EI"))
-# 
-# # Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
-# co <- coeftest(ols5, vcov = vcovHC(ols5, type="HC1"))
-# print(co)
+#                     plot = TRUE)
+
+glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
+             as.factor(Deal_Year), family = binomial(), data = dealdf)
+
+
+
+# Next step: Robustness
+ols5 <- olsAnalysis(T_box~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Operating_Years+Deal_Size+
+                      as.factor(Deal_Year),
+                    dealdf,
+                    "IRR_ols5.xlsx",
+                    normalityTest = TRUE,
+                    plot = FALSE)
+output <- huxreg(ols4,ols5, statistics = c('# observations' = 'nobs',
+                                           'R squared' = 'r.squared',
+                                           'adj. R squared' = 'adj.r.squared',
+                                           'F statistic' = 'statistic',
+                                           'P value' = 'p.value'),
+                 error_pos = 'right')
+openxlsx::saveWorkbook(as_Workbook(output),"IRR_ols5.xlsx", overwrite = TRUE)
+
+plot_summs(ols4, ols5, model.names = c("HHI","EI"))
+
+# Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
+co <- coeftest(ols5, vcov = vcovHC(ols5, type="HC1"))
+print(co)
 
 # END OF RETURN ANALYSIS
-
-
-
 
 
 

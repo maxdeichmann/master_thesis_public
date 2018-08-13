@@ -88,8 +88,7 @@ divers <- function(df, variable, HHIName, type) {
     }
     
     # naming
-    hhiReturn <-
-      hhiReturn[order(as.numeric(rownames(hhiReturn))), , drop = FALSE]
+    hhiReturn <- hhiReturn[order(as.numeric(rownames(hhiReturn))), , drop = FALSE]
     
     # manage output
     names(hhiReturn) <- c(HHIName)
@@ -482,7 +481,7 @@ correlation <- function(df, names) {
   )
 }
 
-scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
+scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
   outcome <- list()
   mycolours <- c("highlight" = "red", "normal" = "grey50")
   if(highlight == TRUE) {
@@ -506,9 +505,7 @@ scatterTrend <- function(dependent, independent, df, highlight = TRUE) {
       }
       outcome[[i]] <<- temp
     })
-    
   }
-  
   plot <- grid.arrange(grobs = outcome, top="Main Title")
   print(plot)
 }
