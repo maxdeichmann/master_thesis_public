@@ -102,9 +102,11 @@ divers <- function(df, variable, HHIName, type) {
 }
 
 # crate dataframe on fund level
-fundData <- function(dealdf, divIndices, fundDivIndices) {
+fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
   if (!is.data.frame(dealdf))
     stop("df must be data frame")
+  if (!is.data.frame(mscidf))
+    stop("mscidf must be data frame")
   if (!is.vector(divIndices))
     stop("divIndices must be vector")
   if (!is.vector(fundDivIndices))
@@ -112,6 +114,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices) {
   
   # create columns
   col.names = c(
+    "MSCI",
     "Fund_ID",
     "Operating_Years",
     "LOperating_Years",
@@ -127,6 +130,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices) {
     fundDivIndices
   )
   colClasses = c(
+    "double",
     "integer",
     "integer",
     "double",
@@ -170,6 +174,10 @@ fundData <- function(dealdf, divIndices, fundDivIndices) {
     en <- year(out$Deal_Date[nrow(out)])
     operating <- en - st
     
+    # msci
+    submscidf <- mscidf[mscidf$Year == st-1, ]
+    msci <- submscidf$Return[[1]]
+
     # most common country
     factor <- factor(subdf$Company_Country,unique(dealdf$Company_Country))
     countries <- as.numeric(factor)
@@ -183,6 +191,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices) {
     
     # create row
     row = list(
+      msci,
       out$Fund_ID[nrow(out)],
       operating,
       log(operating),
@@ -511,7 +520,7 @@ scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
 }
 
 
-olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot = FALSE, correlation = TRUE) {
+olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot.analysis = FALSE, plot.results = FALSE, correlation = TRUE) {
   ols <- lm(fn,data = data)
   print(summary(ols))
   output <- huxreg(ols, statistics = c('# observations' = 'nobs', 
@@ -527,15 +536,23 @@ olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot = FALSE, 
     print(lmtest::bptest(ols))
   }
   
-  if (plot == TRUE) {
+  if (plot.analysis == TRUE) {
     histo(ols$residuals, "residuals")
     plot(ols) 
+  }
+  
+  if (plot.results == TRUE) {
+    a <- visreg(ols, "Fund_GeoHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    b <- visreg(ols, "Fund_StageHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    c <- visreg(ols, "Fund_PIGHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    print(grid.arrange(grobs = list(a,b,c)), top="Main Title")
+    
   }
   
   if (correlation == TRUE) {
     print(vif(ols))
   }
-  
+
   return(ols)
 }
 

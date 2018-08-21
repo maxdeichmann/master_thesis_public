@@ -206,7 +206,7 @@ ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+p
             dealdf,
             "IRR_ols1.xlsx",
             normalityTest = TRUE,
-            plot = FALSE)
+            plot.analysis = FALSE)
 
 # outlier
 subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
@@ -215,7 +215,7 @@ ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+p
             subdf,
             "IRR_ols2.xlsx",
             normalityTest = TRUE,
-            plot = FALSE)
+            plot.analysis = FALSE)
 
 # Next step: transform variables: http://rcompanion.org/handbook/I_12.html
 # box cox
@@ -239,7 +239,7 @@ ols3 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
                     dealdf,
                     "IRR_ols3.xlsx",
                     normalityTest = TRUE,
-                    plot = FALSE)
+                    plot.analysis = FALSE)
 
 
 #Next step:  add independent variables
@@ -255,7 +255,13 @@ ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
                     dealdf,
                     "IRR_ols4.xlsx",
                     normalityTest = TRUE,
-                    plot = FALSE)
+                    plot.analysis = FALSE,
+                    plot.results = TRUE)
+
+
+
+fm <- felm(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size | Deal_Year, dealdf)
+visreg(fm, "Fund_StageHHI")
 # VIF
 vif(ols4)
 
@@ -263,6 +269,12 @@ vif(ols4)
 # Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
 co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
 print(co)
+
+# visualize
+ols4 <- lm(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+as.factor(Deal_Year), data = dealdf)
+# visreg(ols4, c("Fund_GeoHHI", "Fund_StageHHI", "Fund_PIGHHI"),type="conditional", gg=TRUE)
+visreg(ols4, c("Fund_GeoHHI","Fund_StageHHI"),type="conditional", gg = TRUE)
+grid.arrange(grobs = a, top="Main Title")
 
 #next step: other independent
 # ols4 <- olsAnalysis(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
@@ -272,12 +284,14 @@ print(co)
 #                     normalityTest = TRUE,
 #                     plot = TRUE)
 
-glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
-             as.factor(Deal_Year), family = binomial(), data = dealdf)
+glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size, family = binomial(), data = dealdf)
+scatterTrend("Success",fund_hhis,dealdf)
+
+summary(glm)
+# effect_plot(glm, pred = Fund_GeoHHI, data = dealdf)
 
 
-
-# Next step: Robustness
+# Next step: Robustness / EI
 ols5 <- olsAnalysis(T_box~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Operating_Years+Deal_Size+
                       as.factor(Deal_Year),
                     dealdf,

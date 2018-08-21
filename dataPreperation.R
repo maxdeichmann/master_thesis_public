@@ -32,6 +32,8 @@ colnames(dealdf)[6] <- "PIS"
 colnames(dealdf)[4] <- "PIG"
 colnames(dealdf)[5] <- "PIC"
 
+mscidf <- read_excel("msci.xlsx", col_types = c("numeric", "numeric"))
+
 
 # stage data adoption
 # "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine",
@@ -109,8 +111,12 @@ for (a in measures) {
 dealdf$Deal_Year <- year(dealdf$Deal_Date)
 
 # success variable
-dealdf$Success[dealdf$Gross_IRR > 0.1 ] <- 1
-dealdf$Success[dealdf$Gross_IRR <= 0.1 ] <- 0
+dealdf$Success[dealdf$Gross_IRR > median(dealdf$Gross_IRR) ] <- 1
+dealdf$Success[dealdf$Gross_IRR <= median(dealdf$Gross_IRR) ] <- 0
+dealdf$Loss[dealdf$Gross_IRR < 0 ] <- 1
+dealdf$Loss[dealdf$Gross_IRR >= 0 ] <- 0
+dealdf$TotalLoss[dealdf$Gross_IRR == -1 ] <- 1
+dealdf$TotalLoss[dealdf$Gross_IRR > -1 ] <- 0
 
 # data transformation
 # independent
@@ -125,18 +131,19 @@ dealdf$LDeal_Size <- log(dealdf$Deal_Size+2)
 dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
 
 # create fund level data
-funddf <- fundData(dealdf,divIndices,fundDivIndices)
+funddf <- fundData(dealdf,divIndices,fundDivIndices, mscidf)
 
 # add fund level hhi to deal levels
 dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operating_Years", "LOperating_Years", 
                                    "Fund_SD","LFund_SD", "Number_Investments", "LNumber_Investments", 
-                                   "Total_Investments", "LTotal_Investments","Popular_Country", fundDivIndices)], 
+                                   "Total_Investments", "LTotal_Investments","Popular_Country","MSCI", 
+                                   fundDivIndices)], 
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience
 # dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
 # funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
-dealdf <- dealdf[dealdf$Gross_IRR != -1,]
+# dealdf <- dealdf[dealdf$Gross_IRR != -1,]
 
 
 # create grouped hhi based on crossproduct
