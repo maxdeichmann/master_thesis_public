@@ -123,12 +123,12 @@ dealdf$TotalLoss[dealdf$Gross_IRR > -1 ] <- 0
 for (a in c(hhiIndices, eiIndices)) {
   newName <- paste('L', a, sep = '')
   divIndices <- c(divIndices,newName)
-  dealdf[[newName]] <- log(dealdf[[a]]+2)
+  dealdf[[newName]] <- log(dealdf[[a]]+1)
 }
-dealdf$LDeal_Size <- log(dealdf$Deal_Size+2)
+dealdf$LDeal_Size <- log(dealdf$Deal_Size+1)
 
 # dependent
-dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
+dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
 
 # create fund level data
 funddf <- fundData(dealdf,divIndices,fundDivIndices, mscidf)
@@ -145,6 +145,7 @@ dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operat
 # funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
 # dealdf <- dealdf[dealdf$Gross_IRR != -1,]
 
+dealdf <- dealdf[dealdf$Fund_ID != 54,]
 
 # create grouped hhi based on crossproduct
 # groupdf <- hhiBuckets(10,dealdf,c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"),c("Gross_IRR", "Deal_Size"))

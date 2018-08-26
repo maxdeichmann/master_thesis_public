@@ -43,6 +43,7 @@ library(rcompanion)
 library(sandwich)
 library(lmtest)
 library(lmtest)
+library(estimatr)
 
 # import sources
 setwd("/Users/maximiliandeichmann/Development/MasterThesis")
@@ -226,16 +227,16 @@ Cox2[1,]
 lambda = Cox2[1, "Box.x"]
 T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
 hist(T_box)
+shapiro.test(T_box)
 
 
 # turkey
 T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
+ST_tuk = transformTukey(subdf$Gross_IRR+2, plotit=FALSE)
 hist(T_tuk)
-
-shapiro.test(T_box)
 shapiro.test(T_tuk)
 
-ols3 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
                     dealdf,
                     "IRR_ols3.xlsx",
                     normalityTest = TRUE,
@@ -246,35 +247,40 @@ ols3 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 # check correlation
 va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI,
             dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years,
-            dealdf$Deal_Year, dealdf$Deal_Size)
-na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size")
+            dealdf$Deal_Year, dealdf$Deal_Size, dealdf$MSCI)
+na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size", "MSCI")
 correlation(va,na)
 
-ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
-                      as.factor(Deal_Year),
-                    dealdf,
+ols4 <- olsAnalysis(ST_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
+                      MSCI+as.factor(Deal_Year),
+                    subdf,
                     "IRR_ols4.xlsx",
                     normalityTest = TRUE,
-                    plot.analysis = FALSE,
+                    autocorrelationTest = TRUE,
+                    plot.analysis = TRUE,
                     plot.results = TRUE)
 
 
 
-fm <- felm(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size | Deal_Year, dealdf)
+a <- vcovHC(ols4, type="HC1")
+co <- coeftest(ols4, vcov. = a)
+wa <- waldtest(ols4, vcov = a)
+print(co)
+print(wa)
+
+
+
+
+
+fm <- felm(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size 
+           | Deal_Year, dealdf)
 visreg(fm, "Fund_StageHHI")
 # VIF
 vif(ols4)
 
 
 # Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
-co <- coeftest(ols4, vcov = vcovHC(ols4, type="HC1"))
-print(co)
-
-# visualize
-ols4 <- lm(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+as.factor(Deal_Year), data = dealdf)
-# visreg(ols4, c("Fund_GeoHHI", "Fund_StageHHI", "Fund_PIGHHI"),type="conditional", gg=TRUE)
-visreg(ols4, c("Fund_GeoHHI","Fund_StageHHI"),type="conditional", gg = TRUE)
-grid.arrange(grobs = a, top="Main Title")
+print(coeftest(ols4, vcov = vcovHC(ols4, type="HC1")))
 
 #next step: other independent
 # ols4 <- olsAnalysis(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+
@@ -284,7 +290,8 @@ grid.arrange(grobs = a, top="Main Title")
 #                     normalityTest = TRUE,
 #                     plot = TRUE)
 
-glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size, family = binomial(), data = dealdf)
+glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)
+           +Operating_Years+Deal_Size, family = binomial(), data = dealdf)
 scatterTrend("Success",fund_hhis,dealdf)
 
 summary(glm)
@@ -318,21 +325,23 @@ print(co)
 
 #Risk ANALYSIS--------------------------------------------------------------------------------------------------------
 
-# 
-# ols1 <- olsAnalysis(Fund_SD~poly(GeoHHI,2)+poly(StageHHI,2)+poly(PIGHHI,2)+Operating_Years+Deal_Size+as.factor(Deal_Year),
-#                     dealdf,
-#                     "SD_ols1.xlsx",
-#                     normalityTest = TRUE,
-#                     plot = FALSE)
-# 
-# # next step: transform dependent variable
-# T_tuk = transformTukey(dealdf$Fund_SD+2, plotit=FALSE)
-# 
-# ols2 <- olsAnalysis(T_tuk~poly(GeoHHI,2)+poly(StageHHI,2)+poly(PIGHHI,2)+Operating_Years+Deal_Size+as.factor(Deal_Year),
-#                     dealdf,
-#                     "SD_ols2.xlsx",
-#                     normalityTest = TRUE,
-#                     plot = FALSE)
+
+ols1 <- olsAnalysis(Fund_SD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years+Deal_Size+as.factor(Deal_Year),
+                    dealdf,
+                    "SD_ols1.xlsx",
+                    normalityTest = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE)
+
+# next step: transform dependent variable
+T_tuk = transformTukey(funddf$Fund_SD+2, plotit=FALSE)
+
+ols2 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Operating_Years,
+                    funddf,
+                    "SD_ols2.xlsx",
+                    normalityTest = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE)
 # 
 # # next step: robust errors
 # co <- coeftest(ols2, vcov = vcovHC(ols2, type="HC1"))

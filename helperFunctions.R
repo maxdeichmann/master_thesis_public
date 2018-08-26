@@ -520,9 +520,20 @@ scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
 }
 
 
-olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot.analysis = FALSE, plot.results = FALSE, correlation = TRUE) {
+olsAnalysis <- function(fn, data, filename, autocorrelationTest = TRUE, normalityTest = TRUE, plot.analysis = FALSE, plot.results = FALSE, 
+                        correlation = TRUE, robust = FALSE) {
+  
   ols <- lm(fn,data = data)
+  
+  if (robust == TRUE) {
+    co <- coeftest(ols, vcov = vcovHC(ols, type="HC1"))
+    wa <- waldtest(ols, vcov = co, data = data)
+    print(co)
+    print(wa)
+  }
+  
   print(summary(ols))
+  
   output <- huxreg(ols, statistics = c('# observations' = 'nobs', 
                                        'R squared' = 'r.squared', 
                                        'adj. R squared' = 'adj.r.squared', 
@@ -536,9 +547,14 @@ olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot.analysis 
     print(lmtest::bptest(ols))
   }
   
+  if(autocorrelationTest == TRUE) {
+    print(durbinWatsonTest(ols))
+  }
+  
   if (plot.analysis == TRUE) {
     histo(ols$residuals, "residuals")
-    plot(ols) 
+    par(mfrow=c(2,2)) # init 4 charts in 1 panel
+    plot(ols)
   }
   
   if (plot.results == TRUE) {
@@ -556,6 +572,35 @@ olsAnalysis <- function(fn, data, filename, normalityTest = TRUE, plot.analysis 
   return(ols)
 }
 
+## ---------------------------------------------------------------------------------------- ##
+## Author: John Fox                                                                         ##
+## Source: http://r.789695.n4.nabble.com/R-extend-summary-lm-for-hccm-td815004.html         ##
+## Adapted by Tony Cookson.                                                                 ##
+##        -- Only Change Made: Changed the name of the function (unwisely maybe)            ##
+##           to summaryR from summaryHCCM.lm.  I also changed the spelling of consistent    ##
+## ---------------------------------------------------------------------------------------- ##
+
+summaryR <- function(model, type=c("hc3", "hc0", "hc1", "hc2", "hc4"), ...){
+  
+  if (!require(car)) stop("Required car package is missing.")
+  
+  type <- match.arg(type)
+  V <- hccm(model, type=type)
+  sumry <- summary(model)
+  table <- coef(sumry)
+  table[,2] <- sqrt(diag(V))
+  table[,3] <- table[,1]/table[,2]
+  table[,4] <- 2*pt(abs(table[,3]), df.residual(model), lower.tail=FALSE)
+  
+  sumry$coefficients <- table
+  p <- nrow(table)
+  hyp <- cbind(0, diag(p - 1))
+  sumry$fstatistic[1] <- linearHypothesis(model, hyp,white.adjust=type)[2,"F"]
+  
+  print(sumry)
+  cat("Note: Heteroscedasticity-consistent standard errors using adjustment", type, "\n")
+  
+}
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
 # remove_outliers <- function(x, na.rm = TRUE, ...) {
