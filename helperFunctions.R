@@ -520,27 +520,19 @@ scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
 }
 
 
-olsAnalysis <- function(fn, data, filename, autocorrelationTest = TRUE, normalityTest = TRUE, plot.analysis = FALSE, plot.results = FALSE, 
-                        correlation = TRUE, robust = FALSE) {
+olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, normalityTest = FALSE, plot.analysis = FALSE, 
+                        plot.results = FALSE, correlation = FALSE) {
   
   ols <- lm(fn,data = data)
   
-  if (robust == TRUE) {
-    co <- coeftest(ols, vcov = vcovHC(ols, type="HC1"))
-    wa <- waldtest(ols, vcov = co, data = data)
-    print(co)
-    print(wa)
-  }
-  
-  print(summary(ols))
-  
-  output <- huxreg(ols, statistics = c('# observations' = 'nobs', 
-                                       'R squared' = 'r.squared', 
-                                       'adj. R squared' = 'adj.r.squared', 
-                                       'F statistic' = 'statistic', 
-                                       'P value' = 'p.value'), 
-                   error_pos = 'right')
-  openxlsx::saveWorkbook(as_Workbook(output),filename, overwrite = TRUE)
+  #"https://raw.githubusercontent.com/IsidoreBeautrelet/economictheoryblog/master/robust_summary.R"
+  robust_se <- as.vector(summary(ols,robust = T)$coefficients[,"Std. Error"])
+  out <- paste0(getwd(),"/",filename)
+  capture.output(stargazer(ols, se=list(robust_se),
+            column.labels=c("robust"),
+            omit = c("Deal_Year"),
+            omit.labels = c("Deal Year FE?"),
+            align=TRUE, type = "html", out=out))
   
   if(normalityTest == TRUE) {
     print(shapiro.test(ols$residuals))
@@ -553,14 +545,13 @@ olsAnalysis <- function(fn, data, filename, autocorrelationTest = TRUE, normalit
   
   if (plot.analysis == TRUE) {
     histo(ols$residuals, "residuals")
-    par(mfrow=c(2,2)) # init 4 charts in 1 panel
     plot(ols)
   }
   
   if (plot.results == TRUE) {
-    a <- visreg(ols, "Fund_GeoHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
-    b <- visreg(ols, "Fund_StageHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
-    c <- visreg(ols, "Fund_PIGHHI",type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    a <- visreg(ols, div[1],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    b <- visreg(ols, div[2],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    c <- visreg(ols, div[3],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
     print(grid.arrange(grobs = list(a,b,c)), top="Main Title")
     
   }

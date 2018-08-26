@@ -32,8 +32,9 @@ colnames(dealdf)[6] <- "PIS"
 colnames(dealdf)[4] <- "PIG"
 colnames(dealdf)[5] <- "PIC"
 
-mscidf <- read_excel("msci.xlsx", col_types = c("numeric", "numeric"))
-
+mscidf <- read_excel("msci_1.xlsx", col_types = c("numeric", "numeric"))
+colnames(mscidf)[1] <- "Year"
+colnames(mscidf)[2] <- "Return"
 
 # stage data adoption
 # "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine",
@@ -118,6 +119,15 @@ dealdf$Loss[dealdf$Gross_IRR >= 0 ] <- 0
 dealdf$TotalLoss[dealdf$Gross_IRR == -1 ] <- 1
 dealdf$TotalLoss[dealdf$Gross_IRR > -1 ] <- 0
 
+# countries: "United States",United Kingdom","Germany",
+# "Spain","Denmark","France","Finland","China","Canada","Israel","Netherlands"
+# "Switzerland","Sweden","India","Japan","South Korea","Czech Republic","Ireland","Hungary"
+
+emerging <- c("Hungary","Czech Republic","South Korea","China","India")
+developed <- c("Ireland","Japan","Switzerland","Sweden","Israel","Netherlands","Canada","United States","United Kingdom","Germany", "Spain","Denmark","France","Finland")
+dealdf$developed <- print(dealdf$Company_Country == developed)
+
+
 # data transformation
 # independent
 for (a in c(hhiIndices, eiIndices)) {
@@ -141,11 +151,10 @@ dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operat
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
 # filter for at least 6 years of firm experience
-# dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
-# funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
+dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
+funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
 # dealdf <- dealdf[dealdf$Gross_IRR != -1,]
-
-dealdf <- dealdf[dealdf$Fund_ID != 54,]
+# dealdf <- dealdf[dealdf$Fund_ID != 54,]
 
 # create grouped hhi based on crossproduct
 # groupdf <- hhiBuckets(10,dealdf,c("GeoHHI","StageHHI","PIGHHI","PICHHI","PISHHI"),c("Gross_IRR", "Deal_Size"))
