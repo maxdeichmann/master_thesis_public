@@ -44,6 +44,7 @@ library(sandwich)
 library(lmtest)
 library(lmtest)
 library(estimatr)
+library(robustHD)
 library(RCurl)
 
 # import sources
@@ -70,6 +71,13 @@ load("fundeiIndices.RData")
 load("lfundeiIndices.RData")
 
 hhiIndices <- c("GeoHHI","StageHHI","PISHHI","PIGHHI","PICHHI")
+
+# filter for at least 6 years of firm experience
+# subdealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
+# subfunddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
+dealdf <- dealdf[dealdf$Fund_ID != 54,]
+
+dealdf$Gross_IRR = winsorize(dealdf$Gross_IRR)
 
 # filter for non errors
 # is.na(dealdf) <- sapply(dealdf, is.infinite)
@@ -208,36 +216,17 @@ fund_hhis <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Fund_PIGHHI","Fund_P
 #RETURN ANALYSIS--------------------------------------------------------------------------------------------------------
 
 
-# run polynomial analysis
-# ols1 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
-#             dealdf,
-#             "IRR_ols1.html",
-#             plot.analysis = FALSE)
-
-# outlier
-subdf <- subset(dealdf,!(rownames(dealdf) %in% c(395))) # deal_ID: 365
-
-# ols2 <- olsAnalysis(log(Gross_IRR+2)~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
-#             subdf,
-#             "IRR_ols2.html",
-#             plot.analysis = FALSE)
-
 # Next step: transform variables: http://rcompanion.org/handbook/I_12.html
 # box cox
-Box = boxcox((dealdf$Gross_IRR+2) ~ 1, lambda = seq(-6,6,0.1))
-Cox = data.frame(Box$x, Box$y)
-Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
-Cox2[1,]
-lambda = Cox2[1, "Box.x"]
-T_box = ((dealdf$Gross_IRR+2) ^ lambda - 1)/lambda
+T_box <- transformBox(dealdf$Gross_IRR+2)
 hist(T_box)
 shapiro.test(T_box)
 
 # turkey
-T_tuk = transformTukey(dealdf$Gross_IRR+2, plotit=FALSE)
-ST_tuk = transformTukey(subdf$Gross_IRR+2, plotit=FALSE)
-hist(T_tuk)
-shapiro.test(T_tuk)
+# T_tuk = transformTukey(dealdf$Gross_IRR+1, plotit=FALSE)
+# ST_tuk = transformTukey(subdealdf$Gross_IRR+2, plotit=FALSE)
+# hist(T_tuk)
+# shapiro.test(T_tuk)
 
 # ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
 #                     dealdf,
@@ -250,13 +239,14 @@ shapiro.test(T_tuk)
 # check correlation
 va <- cbind(dealdf$Fund_GeoHHI, dealdf$Fund_StageHHI, dealdf$Fund_PISHHI, dealdf$Fund_PIGHHI,
             dealdf$LFund_PICHHI, dealdf$Number_Investments, dealdf$Total_Investments, dealdf$Operating_Years,
-            dealdf$Deal_Year, dealdf$Deal_Size, dealdf$MSCI, dealdf$developed)
-na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size", "MSCI", "developed")
+            dealdf$Deal_Year, dealdf$Deal_Size, dealdf$MSCI)
+na <- c(fund_hhis,"Number_Investments","Total_Investments", "Operating_Years", "Deal_Year", "Deal_Size", "MSCI")
 correlation(va,na)
 
-ols4 <- olsAnalysis(ST_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                    MSCI+developed+as.factor(Deal_Year),
-                    subdf,
+
+ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+                    MSCI+developed+Deal_Size+as.factor(Deal_Year),
+                    dealdf,
                     "IRR_ols4.html",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
                     normalityTest = TRUE,
@@ -264,101 +254,81 @@ ols4 <- olsAnalysis(ST_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_P
                     correlation = TRUE,
                     plot.analysis = FALSE,
                     plot.results = TRUE)
-
-earlydf <- subdf[subdf$Company_Stage != "Early Stage",]
-EST_tuk = transformTukey(earlydf$Gross_IRR+2, plotit=FALSE)
-ols5 <- olsAnalysis(EST_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                      MSCI+as.factor(Deal_Year),
+earlydf <- dealdf[dealdf$Company_Stage == "Early Stage",]
+ET_box <- transformBox(earlydf$Gross_IRR+2)
+ols5 <- olsAnalysis(ET_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+                      MSCI+developed+Deal_Size+as.factor(Deal_Year),
                     earlydf,
                     "IRR_ols5.html",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    c("Fund_GeoHHI","Fund_PISHHI"),
                     normalityTest = TRUE,
                     autocorrelationTest = TRUE,
                     correlation = TRUE,
                     plot.analysis = FALSE,
                     plot.results = TRUE)
-
-latedf <- subdf[subdf$Company_Stage != "Late Stage",]
-LST_tuk = transformTukey(latedf$Gross_IRR+2, plotit=FALSE)
-ols6 <- olsAnalysis(LST_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                      MSCI+as.factor(Deal_Year),
+latedf <- dealdf[dealdf$Company_Stage == "Late Stage",]
+LT_box <- transformBox(latedf$Gross_IRR+2)
+ols6 <- olsAnalysis(LT_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+                      MSCI+developed+Deal_Size+as.factor(Deal_Year),
                     latedf,
                     "IRR_ols6.html",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    c("Fund_GeoHHI","Fund_PISHHI"),
                     normalityTest = TRUE,
                     autocorrelationTest = TRUE,
                     correlation = TRUE,
                     plot.analysis = FALSE,
                     plot.results = TRUE)
 
-ols7 <- olsAnalysis(ST_tuk~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
-                      MSCI+developed+as.factor(Deal_Year),
-                    subdf,
-                    "IRR_ols7.html",
-                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = FALSE,
-                    plot.results = TRUE)
 
-earlydf <- subdf[subdf$Company_Stage != "Early Stage",]
-EST_tuk = transformTukey(earlydf$Gross_IRR+2, plotit=FALSE)
-ols8 <- olsAnalysis(EST_tuk~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
-                      MSCI+as.factor(Deal_Year),
-                    earlydf,
-                    "IRR_ols8.html",
-                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = FALSE,
-                    plot.results = TRUE)
+capture.output(
+  stargazer(ols4[[1]], ols5[[1]], ols6[[1]],
+          title="Return Regression Results",
+          dep.var.labels = c("IRR","IRR","IRR","IRR"),
+          se=list(ols4[[2]], ols5[[2]], ols6[[2]]),
+          column.labels=c("Total", "Early Stage","Late Stage"),
+          omit = c("Deal_Year"),
+          omit.labels = c("Deal Year FE"),
+          
+          align=TRUE, type = "html", out = paste0(getwd(),"/","unfiltered.html"))
+  )
 
-latedf <- subdf[subdf$Company_Stage != "Late Stage",]
-LST_tuk = transformTukey(latedf$Gross_IRR+2, plotit=FALSE)
-ols9 <- olsAnalysis(LST_tuk~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
-                      MSCI+as.factor(Deal_Year),
-                    latedf,
-                    "IRR_ols9.html",
-                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = FALSE,
-                    plot.results = TRUE)
+
+
+winsorize(dealdf$Gross_IRR)
 
 
 #next step: other independent
+effect_plot(glm, pred = Fund_GeoHHI, data = dealdf, plot.points = T)
 
-glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)
-           +Operating_Years+Deal_Size, family = binomial(), data = dealdf)
-scatterTrend("Success",fund_hhis,dealdf)
+glm1 <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)
+           +Operating_Years+Deal_Size, family = binomial, data = dealdf)
+stargazer(glm1, type = "text", add.lines=list(c("Hosmer and Lemeshow",r[1]), c("Cox and Snell",r[2]),c("Nagelkerke",r[3])))
+glm2 <- glm(Loss~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)
+            +Operating_Years+Deal_Size, family = binomial, data = dealdf)
+stargazer(glm2, type = "text", add.lines=list(c("Hosmer and Lemeshow",r[1]), c("Cox and Snell",r[2]),c("Nagelkerke",r[3])))
+glm3 <- glm(TotalLoss~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)
+            +Operating_Years+Deal_Size, family = binomial, data = dealdf)
+stargazer(glm3, type = "text", add.lines=list(c("Hosmer and Lemeshow",r[1]), c("Cox and Snell",r[2]),c("Nagelkerke",r[3])))
 
-summary(glm)
-# effect_plot(glm, pred = Fund_GeoHHI, data = dealdf)
 
 
-# Next step: Robustness / EI
-ols5 <- olsAnalysis(T_box~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Operating_Years+Deal_Size+
-                      as.factor(Deal_Year),
-                    dealdf,
-                    "IRR_ols5.xlsx",
-                    normalityTest = TRUE,
-                    plot = FALSE)
-output <- huxreg(ols4,ols5, statistics = c('# observations' = 'nobs',
-                                           'R squared' = 'r.squared',
-                                           'adj. R squared' = 'adj.r.squared',
-                                           'F statistic' = 'statistic',
-                                           'P value' = 'p.value'),
-                 error_pos = 'right')
-openxlsx::saveWorkbook(as_Workbook(output),"IRR_ols5.xlsx", overwrite = TRUE)
 
-plot_summs(ols4, ols5, model.names = c("HHI","EI"))
+glm <- glm(Success~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2), family=binomial, data = dealdf)
+effect_plot(glm, pred = Fund_GeoHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_StageHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_PIGHHI, data = dealdf, plot.points = T)
 
-# Next step: Robust errors http://data.princeton.edu/wws509/r/robust.html
-co <- coeftest(ols5, vcov = vcovHC(ols5, type="HC1"))
-print(co)
+glm <- glm(Loss~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2), family=binomial, data = dealdf)
+effect_plot(glm, pred = Fund_GeoHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_StageHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_PIGHHI, data = dealdf, plot.points = T)
+
+glm <- glm(TotalLoss~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2), family=binomial, data = dealdf)
+effect_plot(glm, pred = Fund_GeoHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_StageHHI, data = dealdf, plot.points = T)
+effect_plot(glm, pred = Fund_PIGHHI, data = dealdf, plot.points = T)
+
+
 
 # END OF RETURN ANALYSIS
 

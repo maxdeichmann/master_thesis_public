@@ -60,6 +60,9 @@ dealdf$Company_Stage[dealdf$Company_Stage == "Spin-Off" ] <- "Early Stage VC"
 dealdf$Company_Stage[dealdf$Company_Stage == "Later Stage VC" ] <- "Late Stage"
 dealdf$Company_Stage[dealdf$Company_Stage == "Early Stage VC" ] <- "Early Stage"
 
+barplot(prop.table(table(dealdf$Company_Stage)))
+
+
 # Missing deal sizes values -> fund median
 # Missing IRR values -> WA deal size
 # Missing countries -> most investes
@@ -125,7 +128,7 @@ dealdf$TotalLoss[dealdf$Gross_IRR > -1 ] <- 0
 
 emerging <- c("Hungary","Czech Republic","South Korea","China","India")
 developed <- c("Ireland","Japan","Switzerland","Sweden","Israel","Netherlands","Canada","United States","United Kingdom","Germany", "Spain","Denmark","France","Finland")
-dealdf$developed <- print(dealdf$Company_Country == developed)
+dealdf$developed <- as.numeric(dealdf$Company_Country %in% developed)
 
 
 # data transformation
@@ -133,12 +136,12 @@ dealdf$developed <- print(dealdf$Company_Country == developed)
 for (a in c(hhiIndices, eiIndices)) {
   newName <- paste('L', a, sep = '')
   divIndices <- c(divIndices,newName)
-  dealdf[[newName]] <- log(dealdf[[a]]+1)
+  dealdf[[newName]] <- log(dealdf[[a]]+2)
 }
-dealdf$LDeal_Size <- log(dealdf$Deal_Size+1)
+dealdf$LDeal_Size <- log(dealdf$Deal_Size+2)
 
 # dependent
-dealdf$LGross_IRR <- log(dealdf$Gross_IRR+1)
+dealdf$LGross_IRR <- log(dealdf$Gross_IRR+2)
 
 # create fund level data
 funddf <- fundData(dealdf,divIndices,fundDivIndices, mscidf)
@@ -150,9 +153,7 @@ dealdf <- merge(dealdf,funddf[ , c("Fund_ID","Fund_IRR","Fund_Deal_Size","Operat
                                    fundDivIndices)], 
                 by.x = "Fund_ID", by.y = "Fund_ID")
 
-# filter for at least 6 years of firm experience
-dealdf <- dealdf[dealdf$Operating_Years >= 6 | dealdf$Number_Investments >= 5,]
-funddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
+
 # dealdf <- dealdf[dealdf$Gross_IRR != -1,]
 # dealdf <- dealdf[dealdf$Fund_ID != 54,]
 

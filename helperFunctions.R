@@ -188,7 +188,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     } else {
       country <<- unique(dealdf$Company_Country)[index]
     }
-    
+
     # create row
     row = list(
       msci,
@@ -207,7 +207,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     )
     
     for (b in 1:length(divIndices)) {
-      row[b+12] <- out[[divIndices[b]]][[nrow(out)]]
+      row[b+13] <- out[[divIndices[b]]][[nrow(out)]]
     }
     
     funddf[nrow(funddf) + 1,] = row
@@ -255,6 +255,16 @@ hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
   groupdf[["bucket"]] <- c(0:numBuckets)
   return(groupdf)
   
+}
+
+transformBox <- function(x) {
+  Box = boxcox((x) ~ 1, lambda = seq(-6,6,0.1))
+  Cox = data.frame(Box$x, Box$y)
+  Cox2 = Cox[with(Cox, order(-Cox$Box.y)),]
+  Cox2[1,]
+  lambda = Cox2[1, "Box.x"]
+  T_box = ((x) ^ lambda - 1)/lambda
+  return(T_box)
 }
 
 # crate dataframe on fund level
@@ -540,6 +550,7 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
   }
   
   if(autocorrelationTest == TRUE) {
+    # has to be > 0,05
     print(durbinWatsonTest(ols))
   }
   
@@ -549,10 +560,12 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
   }
   
   if (plot.results == TRUE) {
-    a <- visreg(ols, div[1],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
-    b <- visreg(ols, div[2],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
-    c <- visreg(ols, div[3],type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
-    print(grid.arrange(grobs = list(a,b,c)), top="Main Title")
+    graphs = list()
+    for(i in div) {
+      graphs[[i]] <- visreg(ols, i,type="conditional", gg = TRUE) + xlim(0, 1) + theme_minimal()
+    }
+    
+    print(grid.arrange(grobs = graphs), top="Main Title")
     
   }
   
@@ -560,7 +573,7 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
     print(vif(ols))
   }
 
-  return(ols)
+  return(list(ols,robust_se))
 }
 
 ## ---------------------------------------------------------------------------------------- ##
@@ -591,6 +604,20 @@ summaryR <- function(model, type=c("hc3", "hc0", "hc1", "hc2", "hc4"), ...){
   print(sumry)
   cat("Note: Heteroscedasticity-consistent standard errors using adjustment", type, "\n")
   
+}
+
+logisticPseudoR2s <- function(LogModel) {
+  dev <- LogModel$deviance
+  nullDev <- LogModel$null.deviance
+  modelN <- length(LogModel$fitted.values)
+  R.l <-  1 -  dev / nullDev
+  R.cs <- 1- exp ( -(nullDev - dev) / modelN)
+  R.n <- R.cs / ( 1 - ( exp (-(nullDev / modelN))))
+  cat("Pseudo R^2 for logistic regression\n")
+  cat("Hosmer and Lemeshow R^2  ", round(R.l, 3), "\n")
+  cat("Cox and Snell R^2        ", round(R.cs, 3), "\n")
+  cat("Nagelkerke R^2           ", round(R.n, 3),    "\n")
+  return(c(round(R.l, 3),round(R.cs, 3),round(R.n, 3)))
 }
 
 # from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
