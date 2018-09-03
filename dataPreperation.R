@@ -115,8 +115,8 @@ for (a in measures) {
 dealdf$Deal_Year <- year(dealdf$Deal_Date)
 
 # success variable
-dealdf$Success[dealdf$Gross_IRR > median(dealdf$Gross_IRR) ] <- 1
-dealdf$Success[dealdf$Gross_IRR <= median(dealdf$Gross_IRR) ] <- 0
+dealdf$Success[dealdf$Gross_IRR > 0 ] <- 1
+dealdf$Success[dealdf$Gross_IRR <= 0 ] <- 0
 dealdf$Loss[dealdf$Gross_IRR < 0 ] <- 1
 dealdf$Loss[dealdf$Gross_IRR >= 0 ] <- 0
 dealdf$TotalLoss[dealdf$Gross_IRR == -1 ] <- 1

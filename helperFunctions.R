@@ -531,10 +531,10 @@ scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
 
 
 olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, normalityTest = FALSE, plot.analysis = FALSE, 
-                        plot.results = FALSE, correlation = FALSE) {
+                        plot.results = FALSE, correlation = FALSE, endogeneity = FALSE, fundLevel = F) {
   
   ols <- lm(fn,data = data)
-  
+  summary(ols)
   #"https://raw.githubusercontent.com/IsidoreBeautrelet/economictheoryblog/master/robust_summary.R"
   robust_se <- as.vector(summary(ols,robust = T)$coefficients[,"Std. Error"])
   out <- paste0(getwd(),"/",filename)
@@ -554,8 +554,32 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
     print(durbinWatsonTest(ols))
   }
   
+  if(endogeneity == TRUE) {
+    #http://r-statistics.co/Assumptions-of-Linear-Regression.html
+    #cor.test(dealdf$Fund_GeoHHI, ols$residuals)
+    
+    if(fundLevel == T) {
+      name <<- c(div, "Number_Investments","Total_Investments", "error")
+    } else {
+      name <<- c(div, "Number_Investments","Total_Investments","MSCI","developed","Deal_Size", "Deal_Year", "error")  
+    }
+    
+    variable <<- data[name[1]]
+    for(n in 1:length(name)-1) {
+      if(n>1) {
+        variable <<- cbind(variable, data[name[n]])  
+      }
+    }
+
+    variable <<- cbind(variable, ols$residuals)
+    names(variable) <- name
+    correlation(variable,name)
+
+  }
+  
   if (plot.analysis == TRUE) {
     histo(ols$residuals, "residuals")
+    par(mfrow=c(2,2))
     plot(ols)
   }
   
