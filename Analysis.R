@@ -249,7 +249,7 @@ shapiro.test(T_box)
 # 
 # 
 ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                    MSCI+developed+Deal_Size+as.factor(Deal_Year),
+                    MSCI+Deal_Size+as.factor(Deal_Year),
                     dealdf,
                     "IRR_ols4.html",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
@@ -261,7 +261,7 @@ ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
                     endogeneity = TRUE)
 
 test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                      MSCI+developed+Deal_Size+as.factor(Deal_Year)+as.factor(Fund_ID),
+                      MSCI+Deal_Size+as.factor(Deal_Year)+as.factor(Fund_ID),
                     dealdf,
                     "IRR_test.html",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
@@ -275,7 +275,7 @@ test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 # earlydf <- dealdf[dealdf$Company_Stage == "Early Stage",]
 # ET_box <- transformBox(earlydf$WGross_IRR+2)
 # ols5 <- olsAnalysis(ET_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-#                       MSCI+developed+Deal_Size+as.factor(Deal_Year),
+#                       MSCI+Deal_Size+as.factor(Deal_Year),
 #                     earlydf,
 #                     "IRR_ols5.html",
 #                     c("Fund_GeoHHI","Fund_PISHHI"),
@@ -288,7 +288,7 @@ test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 # latedf <- dealdf[dealdf$Company_Stage == "Late Stage",]
 # LT_box <- transformBox(latedf$WGross_IRR+2)
 # ols6 <- olsAnalysis(LT_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-#                       MSCI+developed+Deal_Size+as.factor(Deal_Year),
+#                       MSCI+Deal_Size+as.factor(Deal_Year),
 #                     latedf,
 #                     "IRR_ols6.html",
 #                     c("Fund_GeoHHI","Fund_PISHHI"),
@@ -315,7 +315,7 @@ test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 
 glm1 <- glmAnalysis("Loss",
                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size+factor(developed)",
+                    Total_Investments+MSCI+Deal_Size",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
@@ -323,7 +323,7 @@ glm1 <- glmAnalysis("Loss",
 
 glm2 <- glmAnalysis("TotalLoss",
                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size+factor(developed)",
+                    Total_Investments+MSCI+Deal_Size",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
@@ -331,7 +331,7 @@ glm2 <- glmAnalysis("TotalLoss",
 
 glm3 <- glmAnalysis("Success",
                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size+factor(developed)",
+                    Total_Investments+MSCI+Deal_Size",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
@@ -339,7 +339,7 @@ glm3 <- glmAnalysis("Success",
 
 glm4 <- glmAnalysis("SP500Success",
                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size+factor(developed)",
+                    Total_Investments+MSCI+Deal_Size",
                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
