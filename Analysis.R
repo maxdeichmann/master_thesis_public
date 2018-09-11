@@ -82,7 +82,7 @@ hhiIndices <- c("GeoHHI","StageHHI","PISHHI","PIGHHI","PICHHI")
 # subfunddf <- funddf[funddf$Operating_Years >= 6 | funddf$Number_Investments >= 5,]
 dealdf <- dealdf[dealdf$Fund_ID != 54,]
 
-dealdf$WGross_IRR = winsorize(dealdf$Gross_IRR)
+dealdf$WGross_IRR = winsorize(dealdf$Gross_IRR, maxval = 5)
 
 # filter for non errors
 # is.na(dealdf) <- sapply(dealdf, is.infinite)
@@ -232,7 +232,7 @@ shapiro.test(T_box)
 # hist(T_tuk)
 # shapiro.test(T_tuk)
 
-# ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+as.factor(Deal_Year),
+# ols3 <- olsAnalysis(T_tuk~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PIGHHI,2)+Deal_Year,
 #                     dealdf,
 #                     "IRR_ols3.html",
 #                     normalityTest = TRUE,
@@ -248,25 +248,37 @@ shapiro.test(T_box)
 # correlation(va,na)
 # 
 # 
-# ols4 <- olsAnalysis(T_box~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
-#                     MSCI+developed+Deal_Size+as.factor(Deal_Year),
-#                     dealdf,
-#                     "IRR_ols4.html",
-#                     c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-#                     normalityTest = TRUE,
-#                     autocorrelationTest = TRUE,
-#                     correlation = TRUE,
-#                     plot.analysis = TRUE,
-#                     plot.results = TRUE,
-#                     endogeneity = TRUE)
-# 
+ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+                    MSCI+developed+Deal_Size+as.factor(Deal_Year),
+                    dealdf,
+                    "IRR_ols4.html",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE)
+
+test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+                      MSCI+developed+Deal_Size+as.factor(Deal_Year)+as.factor(Fund_ID),
+                    dealdf,
+                    "IRR_test.html",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE)
+
 # earlydf <- dealdf[dealdf$Company_Stage == "Early Stage",]
 # ET_box <- transformBox(earlydf$WGross_IRR+2)
-# ols5 <- olsAnalysis(ET_box~poly(Fund_GeoEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
+# ols5 <- olsAnalysis(ET_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
 #                       MSCI+developed+Deal_Size+as.factor(Deal_Year),
 #                     earlydf,
 #                     "IRR_ols5.html",
-#                     c("Fund_GeoEI","Fund_PISEI"),
+#                     c("Fund_GeoHHI","Fund_PISHHI"),
 #                     normalityTest = TRUE,
 #                     autocorrelationTest = TRUE,
 #                     correlation = TRUE,
@@ -275,11 +287,11 @@ shapiro.test(T_box)
 #                     endogeneity = TRUE)
 # latedf <- dealdf[dealdf$Company_Stage == "Late Stage",]
 # LT_box <- transformBox(latedf$WGross_IRR+2)
-# ols6 <- olsAnalysis(LT_box~poly(Fund_GeoEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments+
-#                       MSCI+factor(developed)+Deal_Size+as.factor(Deal_Year),
+# ols6 <- olsAnalysis(LT_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+#                       MSCI+developed+Deal_Size+as.factor(Deal_Year),
 #                     latedf,
 #                     "IRR_ols6.html",
-#                     c("Fund_GeoEI","Fund_PISEI"),
+#                     c("Fund_GeoHHI","Fund_PISHHI"),
 #                     normalityTest = TRUE,
 #                     autocorrelationTest = TRUE,
 #                     correlation = TRUE,
@@ -297,77 +309,38 @@ shapiro.test(T_box)
 #           omit = c("Deal_Year"),
 #           omit.labels = c("Deal Year FE"),
 # 
-#           align=TRUE, type = "html", out = paste0(getwd(),"/","return_robust.html"))
+#           align=TRUE, type = "html", out = paste0(getwd(),"/","return.html"))
 #   )
-# 
 
-
-
-
-glmAnalysis <- function(dep, ind,ind2, data, autocorrelationTest = T, linearity = T, plot.results = F) {
-  
-  fn <- as.formula(paste(dep,ind,sep="~"))
-  print(fn)
-  glm <- glm(fn, family = binomial, data = data)
-  
-  
-  if(autocorrelationTest == T) {
-    print(vif(glm))
-  }
-  
-  if(linearity == T) {
-    # independent <- c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Number_Investments","Total_Investments","MSCI","Deal_Size")
-    print(ind2)
-    add <-c()
-    for (i in ind2) {
-      new <- paste0("log",i)
-      add <- c(add, new)
-      data[new] <- log(data[i])*data[i]
-    }
-
-    addTerm <- paste(add,collapse="+")
-    fn1 <- update(fn, paste("~ . +",addTerm))
-    df<-data[complete.cases(data),]
-    glm1 <- glm(fn1, family = binomial, data = df,maxit=50)
-    print("--linearity--------------------------------")
-    print(summary(glm1))
-    print("----------------------------------")
-  }
-  
-  if (plot.results == TRUE) {
-    graphs = list()
-    for(i in c("Fund_GeoEI","Fund_StageEI","Fund_PIGEI")) {
-      graphs[[i]] <- visreg(glm, i,type="conditional",scale = "response" , gg = TRUE) + xlim(0, 1) + theme_minimal()
-    }
-    
-    print(grid.arrange(grobs = graphs), top="Main Title")
-    
-  }
-
-  summary(glm)
-  return(glm)
-}
 
 glm1 <- glmAnalysis("Loss",
-                    "poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Number_Investments+
+                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
                     Total_Investments+MSCI+Deal_Size+factor(developed)",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Number_Investments",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
                     plot.results = T)
 
 glm2 <- glmAnalysis("TotalLoss",
-                    "poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Number_Investments+
+                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
                     Total_Investments+MSCI+Deal_Size+factor(developed)",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Number_Investments",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
                     plot.results = T)
 
 glm3 <- glmAnalysis("Success",
-                    "poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PIGEI,2)+Number_Investments+
+                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
                     Total_Investments+MSCI+Deal_Size+factor(developed)",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PIGHHI","Number_Investments",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
+                      "Total_Investments","MSCI","Deal_Size"),
+                    dealdf,
+                    plot.results = T)
+
+glm4 <- glmAnalysis("SP500Success",
+                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
+                    Total_Investments+MSCI+Deal_Size+factor(developed)",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
                       "Total_Investments","MSCI","Deal_Size"),
                     dealdf,
                     plot.results = T)
@@ -377,53 +350,52 @@ glm3 <- glmAnalysis("Success",
 r1 <- logisticPseudoR2s(glm1)
 r2 <- logisticPseudoR2s(glm2)
 r3 <- logisticPseudoR2s(glm3)
-stargazer(glm1, glm2, glm3,
-          add.lines=list(c("Hosmer and Lemeshow",r1[1],r2[1],r3[1]), c("Cox and Snell",r1[2],r2[2],r3[2]),c("Nagelkerke",r1[3],r2[3],r3[3])),
+r4 <- logisticPseudoR2s(glm4)
+stargazer(glm1, glm2, glm3,glm4,
+          add.lines=list(c("Hosmer and Lemeshow",r1[1],r2[1],r3[1],r4[1]), c("Cox and Snell",r1[2],r2[2],r3[2],r4[2]),
+                         c("Nagelkerke",r1[3],r2[3],r3[3],r4[3])),
           title="Logistic Regression Results",
-          align=TRUE, type = "html", out = paste0(getwd(),"/","logistic_robust.html")
+          align=TRUE, type = "html", out = paste0(getwd(),"/","logistic.html")
           )
-
-
-
 
 
 
 #Risk ANALYSIS--------------------------------------------------------------------------------------------------------
 
-# funddf <- funddf[funddf$Number_Investments > 1, ]
-# funddf$WFund_SD <- winsorize(funddf$Fund_SD)
-# source("helperFunctions.R")
-# ols1 <- olsAnalysis(WFund_SD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments,
-#                     funddf,
-#                     "SD_ols1.html",
-#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
-#                     normalityTest = TRUE,
-#                     autocorrelationTest = TRUE,
-#                     correlation = TRUE,
-#                     plot.analysis = TRUE,
-#                     plot.results = TRUE,
-#                     endogeneity = TRUE,
-#                     fundLevel = TRUE)
-# 
-# ols2 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
-#                     funddf,
-#                     "SD_ols2.html",
-#                     c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-#                     normalityTest = TRUE,
-#                     autocorrelationTest = TRUE,
-#                     correlation = TRUE,
-#                     plot.analysis = TRUE,
-#                     plot.results = TRUE,
-#                     endogeneity = TRUE,
-#                     fundLevel = TRUE)
-# 
-# visreg(ols2[[1]], "Fund_GeoEI",type="conditional")
-# 
-# capture.output(
-#   stargazer(ols1[[1]],
-#           title="Risk Regression Results",
-#           dep.var.labels = c("IRR_SD"),
-#           se=list(ols1[[2]]),
-#           column.labels=c("Total"),
-#           align=TRUE, type = "html", out = paste0(getwd(),"/","sd_robust.html"))
-#   )
+funddf <- funddf[funddf$Number_Investments > 1, ]
+funddf$WFund_SD <- winsorize(funddf$Fund_SD)
+source("helperFunctions.R")
+ols1 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
+                    funddf,
+                    "SD_ols1.html",
+                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE,
+                    fundLevel = TRUE)
+
+ols2 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
+                    funddf,
+                    "SD_ols2.html",
+                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE,
+                    fundLevel = TRUE)
+
+visreg(ols2[[1]], "Fund_GeoEI",type="conditional")
+
+capture.output(
+  stargazer(ols1[[1]],
+          title="Risk Regression Results",
+          dep.var.labels = c("IRR_SD"),
+          se=list(ols1[[2]]),
+          column.labels=c("Total"),
+          align=TRUE, type = "html", out = paste0(getwd(),"/","sd_robust.html"))
+  )

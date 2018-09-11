@@ -32,9 +32,28 @@ colnames(dealdf)[6] <- "PIS"
 colnames(dealdf)[4] <- "PIG"
 colnames(dealdf)[5] <- "PIC"
 
+# msci world
 mscidf <- read_excel("msci_1.xlsx", col_types = c("numeric", "numeric"))
 colnames(mscidf)[1] <- "Year"
 colnames(mscidf)[2] <- "Return"
+
+# sp500
+sp500df <- read_excel("sp500.xlsx", col_types = c("date", "numeric"))
+colnames(sp500df)[1] <- "Date"
+colnames(sp500df)[2] <- "SP500Return"
+# dealdf$sp500 <- values[match(year(sp500df$date), year(dealdf$Deal_Date))]
+#   
+#   sp500df$date[]  #year(dealdf$Deal_Date) %in% year(sp500df$date)
+  
+dealdf$Deal_Year <- year(dealdf$Deal_Date)
+sp500df$Year <- year(sp500df$Date)
+sp500df$SP500Return <- sp500df$SP500Return/100
+  
+dealdf <- merge(dealdf,sp500df[ ,], 
+                by.x = "Deal_Year", by.y = "Year")
+  
+  
+  
 
 # stage data adoption
 # "Early Stage VC","Later Stage VC","PE Growth/Expansion","PIPE","Buyout/LBO","Seed Round","Mezzanine",
@@ -117,6 +136,8 @@ dealdf$Deal_Year <- year(dealdf$Deal_Date)
 # success variable
 dealdf$Success[dealdf$Gross_IRR > 0 ] <- 1
 dealdf$Success[dealdf$Gross_IRR <= 0 ] <- 0
+dealdf$SP500Success[dealdf$Gross_IRR >= dealdf$SP500Return] <- 1
+dealdf$SP500Success[dealdf$Gross_IRR < dealdf$SP500Return] <- 0
 dealdf$Loss[dealdf$Gross_IRR < 0 ] <- 1
 dealdf$Loss[dealdf$Gross_IRR >= 0 ] <- 0
 dealdf$TotalLoss[dealdf$Gross_IRR == -1 ] <- 1

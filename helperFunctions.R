@@ -529,11 +529,58 @@ scatterTrend <- function(dependent, independent, df, highlight = FALSE) {
   print(plot)
 }
 
+glmAnalysis <- function(dep, ind,ind2, data, autocorrelationTest = T, linearity = T, plot.results = F) {
+  
+  fn <- as.formula(paste(dep,ind,sep="~"))
+  print(fn)
+  glm <- glm(fn, family = binomial, data = data)
+  
+  
+  if(autocorrelationTest == T) {
+    print(vif(glm))
+  }
+  
+  if(linearity == T) {
+    
+    print(ind2)
+    add <-c()
+    for (i in ind2) {
+      new <- paste0("log",i)
+      add <- c(add, new)
+      data[new] <- log(data[i])*data[i]
+    }
+    
+    addTerm <- paste(add,collapse="+")
+    fn1 <- update(fn, paste("~ . +",addTerm))
+    df<-data[complete.cases(data),]
+    glm1 <- glm(fn1, family = binomial, data = df,maxit=50)
+    print("--linearity--------------------------------")
+    print(summary(glm1))
+    print("----------------------------------")
+  }
+  
+  if (plot.results == TRUE) {
+    graphs = list()
+    for(i in c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI")) {
+      graphs[[i]] <- visreg(glm, i,type="conditional",scale = "response" , gg = TRUE) + xlim(0, 1) + theme_minimal()
+    }
+    
+    print(grid.arrange(grobs = graphs), top="Main Title")
+    
+  }
+  
+  summary(glm)
+  return(glm)
+}
 
 olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, normalityTest = FALSE, plot.analysis = FALSE, 
                         plot.results = FALSE, correlation = FALSE, endogeneity = FALSE, fundLevel = F) {
   
   ols <- lm(fn,data = data)
+  
+  # print("---------------")
+  # print(summary(lm(fn,data = data,weights=1/(1+0.5*x^2))))
+  # print("---------------")
   summary(ols)
   #"https://raw.githubusercontent.com/IsidoreBeautrelet/economictheoryblog/master/robust_summary.R"
   robust_se <- as.vector(summary(ols,robust = T)$coefficients[,"Std. Error"])
