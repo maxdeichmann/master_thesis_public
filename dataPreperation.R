@@ -148,7 +148,8 @@ dealdf$TotalLoss[dealdf$Gross_IRR > -1 ] <- 0
 # "Switzerland","Sweden","India","Japan","South Korea","Czech Republic","Ireland","Hungary"
 
 emerging <- c("Hungary","Czech Republic","South Korea","China","India")
-developed <- c("Ireland","Japan","Switzerland","Sweden","Israel","Netherlands","Canada","United States","United Kingdom","Germany", "Spain","Denmark","France","Finland")
+developed <- c("Ireland","Japan","Switzerland","Sweden","Israel","Netherlands","Canada",
+               "United States","United Kingdom","Germany", "Spain","Denmark","France","Finland")
 dealdf$developed <- as.numeric(dealdf$Company_Country %in% developed)
 
 

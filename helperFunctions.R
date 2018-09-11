@@ -216,47 +216,6 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
   return(funddf)
 }
 
-
-hhiBuckets <- function(numBuckets, inputdf, hhis, variables) {
-  if (missing(numBuckets) | !is.numeric(numBuckets))
-    stop("Check function")
-  if (missing(inputdf) | !is.data.frame(inputdf))
-    stop("Check function")
-  if (missing(hhis) | !is.vector(hhis))
-    stop("Check function")
-  if (missing(variables) | !is.vector(variables))
-    stop("Check function")
-  groupdf <- data.frame(matrix(NA, nrow = numBuckets + 1, ncol = 0))
-  
-  for (x in hhis) {
-    outcomes <- c()
-    for (a in seq(from = 0,
-                  to = 1,
-                  by = 1 / numBuckets)) {
-      irr <- c()
-      investment <- c()
-      for (b in seq(from = 1,
-                    to = nrow(inputdf),
-                    by = 1)) {
-        interest <- inputdf[[x]][b]
-        if ((interest < a + 1 / numBuckets) & (interest >= a)) {
-          irr <- c(irr, inputdf[[variables[1]]][b])
-          investment <- c(investment, inputdf[[variables[2]]][b])
-        }
-      }
-      if (length(irr) > 0) {
-        outcomes = c(outcomes, crossprod(irr, investment)) # weighted.mean ,na.rm = TRUE
-      } else {
-        outcomes = c(outcomes, 0)
-      }
-    }
-    groupdf[[x]] <- outcomes
-  }
-  groupdf[["bucket"]] <- c(0:numBuckets)
-  return(groupdf)
-  
-}
-
 transformBox <- function(x) {
   Box = boxcox((x) ~ 1, lambda = seq(-6,6,0.1))
   Cox = data.frame(Box$x, Box$y)
@@ -318,9 +277,6 @@ dataCleaning <- function(dealdf) {
 }
 
 
-
-
-
 sdDistance <- function(hhis, df) {
   if (missing(df) | !is.data.frame(df))
     stop("Check function - df")
@@ -342,121 +298,6 @@ sdDistance <- function(hhis, df) {
   return(df)
 }
 
-
-
-plotModel <- function(model,
-                      df,
-                      dependent,
-                      independent,
-                      control,
-                      toPredict,
-                      xRange,
-                      xAxis,
-                      yAxis,
-                      title) {
-  if(missing(xAxis)) {
-    xAxis <- "x"
-  }
-  if(missing(yAxis)) {
-    yAxis <- "y"
-  }
-  if(missing(title)) {
-    title <- "Title"
-  }
-  if(missing(xRange)) {
-    xRange <- c(0,1)
-  }
-  values <- rep("numeric", length(independent))
-  legendTitle <- "Independent variables"
-  sequence <- seq(xRange[1], xRange[2], length.out = nrow(df))
-  newRange <- read.table(text = "",
-                         colClasses = values,
-                         col.names = independent) #c(independent,control)
-  for (element in sequence) {
-    newRange[nrow(newRange) + 1,] = rep(element, length(independent))
-  }
-  newValues <- predict.lm(model, newRange) #, type = "terms", terms = independent
-  pred <- make_predictions(model = model, pred = independent[1])
-
-  
-  plot <- ggplot() +
-    ggtitle(title) +
-    xlab(xAxis) +
-    ylab(yAxis) +
-    theme_minimal() +
-    theme(legend.position = "bottom") +
-    xlim(xRange[1], xRange[2]) +
-    scale_colour_discrete(legendTitle)
-
-  for (i in 1:length(independent)) {
-    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]], 
-                       y = df[[dependent]], colour = independent[",i,"]))")
-    plot <- plot + eval(parse(text = loop_input))
-  }
-
-  for (i in 1:length(independent)) {
-    loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]], 
-                        y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
-    plot <- plot + eval(parse(text = loop_input))
-  }
-  print(plot)
-  return(plot)
-}
-
-plotModel1 <- function(model,
-                      df,
-                      dependent,
-                      independent,
-                      xRange,
-                      xAxis,
-                      yAxis,
-                      title) {
-  if(missing(xAxis)) {
-    xAxis <- "x"
-  }
-  if(missing(yAxis)) {
-    yAxis <- "y"
-  }
-  if(missing(title)) {
-    title <- "Title"
-  }
-  if(missing(xRange)) {
-    xRange <- c(0,1)
-  }
-
-  coe <- coef(model)
-  a <- coe[["poly(LFund_GeoHHI, 2)2"]]
-
-  
-  plot <- ggplot() +
-    ggtitle(title) +
-    xlab(xAxis) +
-    ylab(yAxis) +
-    theme_minimal() +
-    theme(legend.position = "bottom") +
-    xlim(xRange[1], xRange[2])
-    # scale_colour_discrete()
-
-  for (i in 1:length(independent)) {
-    loop_input = paste("geom_point(aes(x = df[[independent[",i,"]]],
-                       y = df[[dependent]], colour = independent[",i,"]))")
-    plot <- plot + eval(parse(text = loop_input))
-  }
-  fun.1 <- function(x) coe[["poly(LFund_GeoHHI, 2)2"]]*x^2 + coe[["poly(LFund_GeoHHI, 2)1"]]*x
-  fun.2 <- function(x) -1 * x + 10
-  fun.3 <- function(x) 3 * x + 2
-  # plot + stat_function(fun = fun.1)
-  # plot + stat_function(fun = fun.2)
-  plot + stat_function(fun = sin, colour = "red")
-
-  # for (i in 1:length(independent)) {
-  #   loop_input <- paste("geom_line(aes(x = newRange[[independent[",i,"]]],
-  #                       y = newValues[, toPredict[",i,"]], colour = independent[",i,"]))")
-  #   plot <- plot + eval(parse(text = loop_input))
-  # }
-  print(plot)
-  return(plot)
-}
 
 # from: http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
 # mat : is a matrix of data
@@ -544,16 +385,22 @@ glmAnalysis <- function(dep, ind,ind2, data, autocorrelationTest = T, linearity 
     
     print(ind2)
     add <-c()
-    for (i in ind2) {
-      new <- paste0("log",i)
+    for (i in 1:length(ind2)) {
+      new <- paste0("log",ind2[i])
       add <- c(add, new)
-      data[new] <- log(data[i])*data[i]
+      data[new] <- log(data[ind2[i]]) * data[ind2[i]]
+      
+      if(i < 4) {
+        new <- paste0("log2",ind2[i])
+        add <- c(add, new)
+        data[new] <- log(data[ind2[i]])^2 * data[ind2[i]]^2
+      }
     }
     
     addTerm <- paste(add,collapse="+")
     fn1 <- update(fn, paste("~ . +",addTerm))
     df<-data[complete.cases(data),]
-    glm1 <- glm(fn1, family = binomial, data = df,maxit=50)
+    glm1 <- glm(fn1, family = binomial, data = df, maxit=50)
     print("--linearity--------------------------------")
     print(summary(glm1))
     print("----------------------------------")
@@ -647,35 +494,6 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
   return(list(ols,robust_se))
 }
 
-## ---------------------------------------------------------------------------------------- ##
-## Author: John Fox                                                                         ##
-## Source: http://r.789695.n4.nabble.com/R-extend-summary-lm-for-hccm-td815004.html         ##
-## Adapted by Tony Cookson.                                                                 ##
-##        -- Only Change Made: Changed the name of the function (unwisely maybe)            ##
-##           to summaryR from summaryHCCM.lm.  I also changed the spelling of consistent    ##
-## ---------------------------------------------------------------------------------------- ##
-
-summaryR <- function(model, type=c("hc3", "hc0", "hc1", "hc2", "hc4"), ...){
-  
-  if (!require(car)) stop("Required car package is missing.")
-  
-  type <- match.arg(type)
-  V <- hccm(model, type=type)
-  sumry <- summary(model)
-  table <- coef(sumry)
-  table[,2] <- sqrt(diag(V))
-  table[,3] <- table[,1]/table[,2]
-  table[,4] <- 2*pt(abs(table[,3]), df.residual(model), lower.tail=FALSE)
-  
-  sumry$coefficients <- table
-  p <- nrow(table)
-  hyp <- cbind(0, diag(p - 1))
-  sumry$fstatistic[1] <- linearHypothesis(model, hyp,white.adjust=type)[2,"F"]
-  
-  print(sumry)
-  cat("Note: Heteroscedasticity-consistent standard errors using adjustment", type, "\n")
-  
-}
 
 logisticPseudoR2s <- function(LogModel) {
   dev <- LogModel$deviance
@@ -690,28 +508,3 @@ logisticPseudoR2s <- function(LogModel) {
   cat("Nagelkerke R^2           ", round(R.n, 3),    "\n")
   return(c(round(R.l, 3),round(R.cs, 3),round(R.n, 3)))
 }
-
-# from: https://stackoverflow.com/questions/4787332/how-to-remove-outliers-from-a-dataset/4788102#4788102
-# remove_outliers <- function(x, na.rm = TRUE, ...) {
-#   qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
-#   H <- 1.5 * IQR(x, na.rm = na.rm)
-#   y <- x
-#   y[x < (qnt[1] - H)] <- NA
-#   y[x > (qnt[2] + H)] <- NA
-#   y
-# }
-
-# visualizeModel <- function(model,df,dependentVariables) {
-#   
-#   models <- list()
-#   for (variable in dependentVariables) {
-#     
-#     print(variable)
-#     print(get(variable))
-#     new <- effect_plot(model, pred = get(variable), plot.points = TRUE, data = df) + theme_minimal()
-#     print(new)
-#     models <- list(models, new)
-#     
-#   }
-#   plot_grid(models) 
-# }
