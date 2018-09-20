@@ -248,30 +248,30 @@ shapiro.test(T_box)
 # correlation(va,na)
 # 
 # 
-ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                    MSCI+Deal_Size+as.factor(Deal_Year),
-                    dealdf,
-                    "IRR_ols4.html",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = TRUE,
-                    plot.results = TRUE,
-                    endogeneity = TRUE)
-
-test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
-                      MSCI+Deal_Size+as.factor(Deal_Year)+as.factor(Fund_ID),
-                    dealdf,
-                    "IRR_test.html",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = TRUE,
-                    plot.results = TRUE,
-                    endogeneity = TRUE)
-
+# ols4 <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+#                     MSCI+Deal_Size+as.factor(Deal_Year),
+#                     dealdf,
+#                     "IRR_ols4.html",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+#                     normalityTest = TRUE,
+#                     autocorrelationTest = TRUE,
+#                     correlation = TRUE,
+#                     plot.analysis = TRUE,
+#                     plot.results = TRUE,
+#                     endogeneity = TRUE)
+# 
+# test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
+#                       MSCI+Deal_Size+as.factor(Deal_Year)+as.factor(Fund_ID),
+#                     dealdf,
+#                     "IRR_test.html",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+#                     normalityTest = TRUE,
+#                     autocorrelationTest = TRUE,
+#                     correlation = TRUE,
+#                     plot.analysis = TRUE,
+#                     plot.results = TRUE,
+#                     endogeneity = TRUE)
+# 
 # earlydf <- dealdf[dealdf$Company_Stage == "Early Stage",]
 # ET_box <- transformBox(earlydf$WGross_IRR+2)
 # ols5 <- olsAnalysis(ET_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
@@ -285,6 +285,7 @@ test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 #                     plot.analysis = TRUE,
 #                     plot.results = TRUE,
 #                     endogeneity = TRUE)
+# 
 # latedf <- dealdf[dealdf$Company_Stage == "Late Stage",]
 # LT_box <- transformBox(latedf$WGross_IRR+2)
 # ols6 <- olsAnalysis(LT_box~poly(Fund_GeoHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments+
@@ -295,10 +296,13 @@ test <- olsAnalysis(T_box~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PI
 #                     normalityTest = TRUE,
 #                     autocorrelationTest = TRUE,
 #                     correlation = TRUE,
-#                     plot.analysis = TRUE,
+#                     plot.analysis = FALSE,
 #                     plot.results = TRUE,
 #                     endogeneity = TRUE)
 # 
+# 
+# 
+
 # 
 # capture.output(
 #   stargazer(ols4[[1]], ols5[[1]], ols6[[1]],
@@ -364,11 +368,35 @@ stargazer(glm1, glm2, glm3,glm4,
 
 funddf <- funddf[funddf$Number_Investments > 1, ]
 funddf$WFund_SD <- winsorize(funddf$Fund_SD)
+funddf$WUpSD <- winsorize(funddf$UpSD)
+funddf$WDownSD <- winsorize(funddf$DownSD)
 source("helperFunctions.R")
-ols1 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
+ols1 <- olsAnalysis(WFund_SD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments,
                     funddf,
                     "SD_ols1.html",
-                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE,
+                    fundLevel = TRUE)
+ols2 <- olsAnalysis(WUpSD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments,
+                    funddf,
+                    "SD_ols1.html",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
+                    normalityTest = TRUE,
+                    autocorrelationTest = TRUE,
+                    correlation = TRUE,
+                    plot.analysis = TRUE,
+                    plot.results = TRUE,
+                    endogeneity = TRUE,
+                    fundLevel = TRUE)
+ols3 <- olsAnalysis(WDownSD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+Total_Investments,
+                    funddf,
+                    "SD_ols1.html",
+                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI"),
                     normalityTest = TRUE,
                     autocorrelationTest = TRUE,
                     correlation = TRUE,
@@ -377,17 +405,32 @@ ols1 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_P
                     endogeneity = TRUE,
                     fundLevel = TRUE)
 
-ols2 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
-                    funddf,
-                    "SD_ols2.html",
-                    c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
-                    normalityTest = TRUE,
-                    autocorrelationTest = TRUE,
-                    correlation = TRUE,
-                    plot.analysis = TRUE,
-                    plot.results = TRUE,
-                    endogeneity = TRUE,
-                    fundLevel = TRUE)
+# ols2 <- olsAnalysis(WFund_SD~poly(Fund_GeoEI,2)+poly(Fund_StageEI,2)+poly(Fund_PISEI,2)+Number_Investments+Total_Investments,
+#                     funddf,
+#                     "SD_ols2.html",
+#                     c("Fund_GeoEI","Fund_StageEI","Fund_PISEI"),
+#                     normalityTest = TRUE,
+#                     autocorrelationTest = TRUE,
+#                     correlation = TRUE,
+#                     plot.analysis = TRUE,
+#                     plot.results = TRUE,
+#                     endogeneity = TRUE,
+#                     fundLevel = TRUE)
+
+
+capture.output(
+  stargazer(ols1[[1]], ols2[[1]], ols3[[1]],
+          title="Return Regression Results",
+          dep.var.labels = c("WSD","UpSD","DownSD"),
+          se=list(ols1[[2]], ols2[[2]], ols3[[2]]),
+          column.labels=c("Total", "Early Stage","Late Stage"),
+          omit = c("Deal_Year"),
+          omit.labels = c("Deal Year FE"),
+
+          align=TRUE, type = "html", out = paste0(getwd(),"/","upsd.html"))
+  )
+
+
 
 visreg(ols2[[1]], "Fund_GeoEI",type="conditional")
 

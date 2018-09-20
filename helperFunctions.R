@@ -114,6 +114,8 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
   
   # create columns
   col.names = c(
+    "UpSD",
+    "DownSD",
     "MSCI",
     "Fund_ID",
     "Operating_Years",
@@ -130,6 +132,8 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     fundDivIndices
   )
   colClasses = c(
+    "double",
+    "double",
     "double",
     "integer",
     "integer",
@@ -182,6 +186,32 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     factor <- factor(subdf$Company_Country,unique(dealdf$Company_Country))
     countries <- as.numeric(factor)
     index <- as.numeric(names(which.max(table(countries))))
+    
+    # up
+    irr <- subdf$Gross_IRR
+    uset <- c()
+    for(x in irr) {
+      
+      uset <- c(uset, max(x-0,0)^2)
+    }
+    up <- sqrt(1/nrow(subdf)*sum(uset))
+    
+    # if(subdf$Fund_ID == 1) {
+    #   print(irr)
+    #   min()
+    #   print(uset)
+    #   print(sum(uset))
+    #   print(nrow(subdf))
+    #   print(up)
+    # }
+    
+    
+    # down
+    dset <- c()
+    for(x in irr) {
+      dset <- c(dset, min(x-0,0)^2)
+    }
+    down <- sqrt(1/nrow(subdf)*sum(dset))
 
     if(nrow(out) == 1) {
       country <<- out$Company_Country[nrow(out)]
@@ -191,6 +221,8 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
 
     # create row
     row = list(
+      up,
+      down,
       msci,
       out$Fund_ID[nrow(out)],
       operating,
@@ -207,7 +239,7 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     )
     
     for (b in 1:length(divIndices)) {
-      row[b+13] <- out[[divIndices[b]]][[nrow(out)]]
+      row[b+15] <- out[[divIndices[b]]][[nrow(out)]]
     }
     
     funddf[nrow(funddf) + 1,] = row
@@ -420,10 +452,10 @@ glmAnalysis <- function(dep, ind,ind2, data, autocorrelationTest = T, linearity 
   return(glm)
 }
 
-olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, normalityTest = FALSE, plot.analysis = FALSE, 
+olsAnalysis <- function(fn, df, filename,div, autocorrelationTest = FALSE, normalityTest = FALSE, plot.analysis = FALSE, 
                         plot.results = FALSE, correlation = FALSE, endogeneity = FALSE, fundLevel = F) {
   
-  ols <- lm(fn,data = data)
+  ols <- lm(fn,data = df)
   
   # print("---------------")
   # print(summary(lm(fn,data = data,weights=1/(1+0.5*x^2))))
@@ -458,10 +490,10 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
       name <<- c(div, "Number_Investments","Total_Investments","MSCI","developed","Deal_Size", "Deal_Year", "error")  
     }
     
-    variable <<- data[name[1]]
+    variable <<- df[name[1]]
     for(n in 1:length(name)-1) {
       if(n>1) {
-        variable <<- cbind(variable, data[name[n]])  
+        variable <<- cbind(variable, df[name[n]])  
       }
     }
 
@@ -484,7 +516,10 @@ olsAnalysis <- function(fn, data, filename,div, autocorrelationTest = FALSE, nor
     }
     
     print(grid.arrange(grobs = graphs), top="Main Title")
+    par(mfrow=c(1,1))
+    print(visreg2d(ols, "Fund_GeoHHI", "Fund_PISHHI", plot.type = "persp"))
     
+    print("DONE")
   }
   
   if (correlation == TRUE) {
