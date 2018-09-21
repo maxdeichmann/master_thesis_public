@@ -114,10 +114,10 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
   
   # create columns
   col.names = c(
+    "Fund_ID",
     "UpSD",
     "DownSD",
     "MSCI",
-    "Fund_ID",
     "Operating_Years",
     "LOperating_Years",
     "Fund_IRR",
@@ -171,6 +171,20 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     weights <- subdf$Deal_Size/sum(subdf$Deal_Size)
     weightedAverage <- wt.mean(subdf$Gross_IRR, weights)
     sd <- wt.sd(subdf$Gross_IRR,weights)
+    
+    # if (subdf$Fund_ID[1] == 1) {
+    #   print(subdf)
+    #   print("ds")
+    #   print(subdf$Deal_Size)
+    #   print("weights")
+    #   print(weights)
+    #   print("-----------------")
+    #   print("weightedaverage")
+    #   print(weightedAverage)
+    #   print("wt.sd")
+    #   print(sd)  
+    # }
+    
     # sd <- sd(out$Gross_IRR, na.rm = TRUE)
     
     # operating years
@@ -190,27 +204,18 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
     # up
     irr <- subdf$Gross_IRR
     uset <- c()
-    for(x in irr) {
-      
-      uset <- c(uset, max(x-0,0)^2)
+    for(x in 1:length(irr)) {
+      uset <- c(uset, (max((irr[x]*weights[x])-0,0))^2)
     }
     up <- sqrt(1/nrow(subdf)*sum(uset))
-    
-    # if(subdf$Fund_ID == 1) {
-    #   print(irr)
-    #   min()
-    #   print(uset)
-    #   print(sum(uset))
-    #   print(nrow(subdf))
-    #   print(up)
-    # }
     
     
     # down
     dset <- c()
-    for(x in irr) {
-      dset <- c(dset, min(x-0,0)^2)
+    for(x in 1:length(irr)) {
+      dset <- c(dset, (min((irr[x]*weights[x])-0,0))^2)
     }
+    
     down <- sqrt(1/nrow(subdf)*sum(dset))
 
     if(nrow(out) == 1) {
@@ -221,10 +226,10 @@ fundData <- function(dealdf, divIndices, fundDivIndices, mscidf) {
 
     # create row
     row = list(
+      out$Fund_ID[nrow(out)],
       up,
       down,
       msci,
-      out$Fund_ID[nrow(out)],
       operating,
       log(operating),
       weightedAverage,
@@ -487,7 +492,7 @@ olsAnalysis <- function(fn, df, filename,div, autocorrelationTest = FALSE, norma
     if(fundLevel == T) {
       name <<- c(div, "Number_Investments","Total_Investments", "error")
     } else {
-      name <<- c(div, "Number_Investments","Total_Investments","MSCI","developed","Deal_Size", "Deal_Year", "error")  
+      name <<- c(div, "Number_Investments","Total_Investments","MSCI","Deal_Size", "Deal_Year", "error")  
     }
     
     variable <<- df[name[1]]
@@ -517,7 +522,7 @@ olsAnalysis <- function(fn, df, filename,div, autocorrelationTest = FALSE, norma
     
     print(grid.arrange(grobs = graphs), top="Main Title")
     par(mfrow=c(1,1))
-    print(visreg2d(ols, "Fund_GeoHHI", "Fund_PISHHI", plot.type = "persp"))
+    visreg2d(ols, "Fund_GeoHHI", "Fund_PISHHI", plot.type = "persp")
     
     print("DONE")
   }

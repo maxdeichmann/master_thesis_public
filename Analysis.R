@@ -315,53 +315,53 @@ shapiro.test(T_box)
 # 
 #           align=TRUE, type = "html", out = paste0(getwd(),"/","return.html"))
 #   )
-
-
-glm1 <- glmAnalysis("Loss",
-                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
-                      "Total_Investments","MSCI","Deal_Size"),
-                    dealdf,
-                    plot.results = T)
-
-glm2 <- glmAnalysis("TotalLoss",
-                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
-                      "Total_Investments","MSCI","Deal_Size"),
-                    dealdf,
-                    plot.results = T)
-
-glm3 <- glmAnalysis("Success",
-                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
-                      "Total_Investments","MSCI","Deal_Size"),
-                    dealdf,
-                    plot.results = T)
-
-glm4 <- glmAnalysis("SP500Success",
-                    "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
-                    Total_Investments+MSCI+Deal_Size",
-                    c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
-                      "Total_Investments","MSCI","Deal_Size"),
-                    dealdf,
-                    plot.results = T)
-
-
-
-r1 <- logisticPseudoR2s(glm1)
-r2 <- logisticPseudoR2s(glm2)
-r3 <- logisticPseudoR2s(glm3)
-r4 <- logisticPseudoR2s(glm4)
-stargazer(glm1, glm2, glm3,glm4,
-          add.lines=list(c("Hosmer and Lemeshow",r1[1],r2[1],r3[1],r4[1]), c("Cox and Snell",r1[2],r2[2],r3[2],r4[2]),
-                         c("Nagelkerke",r1[3],r2[3],r3[3],r4[3])),
-          title="Logistic Regression Results",
-          align=TRUE, type = "html", out = paste0(getwd(),"/","logistic.html")
-          )
-
+# 
+# 
+# glm1 <- glmAnalysis("Loss",
+#                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
+#                     Total_Investments+MSCI+Deal_Size",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
+#                       "Total_Investments","MSCI","Deal_Size"),
+#                     dealdf,
+#                     plot.results = T)
+# 
+# glm2 <- glmAnalysis("TotalLoss",
+#                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
+#                     Total_Investments+MSCI+Deal_Size",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
+#                       "Total_Investments","MSCI","Deal_Size"),
+#                     dealdf,
+#                     plot.results = T)
+# 
+# glm3 <- glmAnalysis("Success",
+#                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
+#                     Total_Investments+MSCI+Deal_Size",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
+#                       "Total_Investments","MSCI","Deal_Size"),
+#                     dealdf,
+#                     plot.results = T)
+# 
+# glm4 <- glmAnalysis("SP500Success",
+#                     "poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_PISHHI,2)+Number_Investments+
+#                     Total_Investments+MSCI+Deal_Size",
+#                     c("Fund_GeoHHI","Fund_StageHHI","Fund_PISHHI","Number_Investments",
+#                       "Total_Investments","MSCI","Deal_Size"),
+#                     dealdf,
+#                     plot.results = T)
+# 
+# 
+# 
+# r1 <- logisticPseudoR2s(glm1)
+# r2 <- logisticPseudoR2s(glm2)
+# r3 <- logisticPseudoR2s(glm3)
+# r4 <- logisticPseudoR2s(glm4)
+# stargazer(glm1, glm2, glm3,glm4,
+#           add.lines=list(c("Hosmer and Lemeshow",r1[1],r2[1],r3[1],r4[1]), c("Cox and Snell",r1[2],r2[2],r3[2],r4[2]),
+#                          c("Nagelkerke",r1[3],r2[3],r3[3],r4[3])),
+#           title="Logistic Regression Results",
+#           align=TRUE, type = "html", out = paste0(getwd(),"/","logistic.html")
+#           )
+# 
 
 
 #Risk ANALYSIS--------------------------------------------------------------------------------------------------------
@@ -421,9 +421,9 @@ ols3 <- olsAnalysis(WDownSD~poly(Fund_GeoHHI,2)+poly(Fund_StageHHI,2)+poly(Fund_
 capture.output(
   stargazer(ols1[[1]], ols2[[1]], ols3[[1]],
           title="Return Regression Results",
-          dep.var.labels = c("WSD","UpSD","DownSD"),
+          dep.var.labels = c("Weighted SD","Upside SD","Downside SD"),
           se=list(ols1[[2]], ols2[[2]], ols3[[2]]),
-          column.labels=c("Total", "Early Stage","Late Stage"),
+          column.labels=c("Total Risk", "Upside Risk","Downside Risk"),
           omit = c("Deal_Year"),
           omit.labels = c("Deal Year FE"),
 
